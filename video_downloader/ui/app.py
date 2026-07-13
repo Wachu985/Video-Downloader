@@ -268,4 +268,17 @@ class AppShell:
 
 async def main(page: ft.Page) -> None:
     shell = AppShell(page)
-    shell.build()
+    try:
+        shell.build()
+    finally:
+        # The window starts hidden (FLET_APP_HIDDEN): reveal it only when the
+        # frameless UI is in place so the native title bar never flashes.
+        # The finally guarantees the window appears even if build() fails.
+        if not page.web:
+            page.update()
+            try:
+                await page.window.wait_until_ready_to_show()
+            except Exception:
+                logger.exception("wait_until_ready_to_show failed; showing anyway")
+            page.window.visible = True
+            page.update()

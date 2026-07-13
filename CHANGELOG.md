@@ -20,6 +20,9 @@ introduced each change.
   dependency card refresh, and a toast confirms ffprobe is available.
   Previously the "downloading in the background" notice stayed until the
   app was restarted.
+- Startup flash: the window now launches hidden and is revealed only once
+  the frameless UI is fully built, removing the ugly transition where the
+  native title bar and an empty canvas were visible for an instant.
 
 ## [0.1.0] - 2026-07-13
 

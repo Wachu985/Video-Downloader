@@ -9,4 +9,6 @@ from video_downloader.utils.env import ensure_common_paths
 if __name__ == "__main__":
     ensure_common_paths()
     setup_logging()
-    ft.run(main, assets_dir="assets")
+    # Start with the window hidden: the shell reveals it once the frameless
+    # UI is fully built, avoiding the native-title-bar flash on launch.
+    ft.run(main, assets_dir="assets", view=ft.AppView.FLET_APP_HIDDEN)
