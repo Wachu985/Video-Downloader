@@ -54,3 +54,8 @@ class ConversionProgress(TaskEvent):
 class ConversionFinished(TaskEvent):
     output_path: Path | None
     error_key: str | None = None
+
+
+@dataclass(slots=True, frozen=True)
+class FFmpegToolchainReady(AppEvent):
+    """The background download of the full ffmpeg+ffprobe toolchain finished."""

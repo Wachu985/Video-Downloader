@@ -178,23 +178,21 @@ class Sidebar(ft.Container):
         ]
 
         # Footer ------------------------------------------------------------
-        color, chip_key = _FFMPEG_CHIP.get(ffmpeg_source, _FFMPEG_CHIP["missing"])
         self._ffmpeg_text = ft.Text(
-            t(chip_key),
+            "",
             size=11.5,
-            color=color,
             font_family=theme.FONT_BODY_MEDIUM,
             no_wrap=True,
+        )
+        self._ffmpeg_dot = ft.Container(
+            width=8,
+            height=8,
+            border_radius=ft.BorderRadius.all(theme.RADIUS_PILL),
         )
         self._ffmpeg_chip = ft.Container(
             content=ft.Row(
                 [
-                    ft.Container(
-                        width=8,
-                        height=8,
-                        bgcolor=color,
-                        border_radius=ft.BorderRadius.all(theme.RADIUS_PILL),
-                    ),
+                    self._ffmpeg_dot,
                     self._ffmpeg_text,
                 ],
                 spacing=8,
@@ -205,6 +203,7 @@ class Sidebar(ft.Container):
             border_radius=ft.BorderRadius.all(theme.RADIUS_CONTROL),
             padding=ft.Padding.symmetric(vertical=8, horizontal=12),
         )
+        self.set_ffmpeg_status(ffmpeg_source)
         self._theme_icon = ft.Icon(
             ft.Icons.DARK_MODE_OUTLINED, size=19, color=ft.Colors.ON_SURFACE_VARIANT
         )
@@ -251,6 +250,15 @@ class Sidebar(ft.Container):
 
     def set_downloads_badge(self, count: int) -> None:
         self._items[1].set_badge(count)
+        safe_update(self)
+
+    def set_ffmpeg_status(self, source: str) -> None:
+        """Refresh the footer chip (e.g. after the toolchain download ends)."""
+        color, chip_key = _FFMPEG_CHIP.get(source, _FFMPEG_CHIP["missing"])
+        self._ffmpeg_dot.bgcolor = color
+        self._ffmpeg_text.value = t(chip_key)
+        self._ffmpeg_text.color = color
+        self._ffmpeg_chip.tooltip = t(chip_key) if self._collapsed else None
         safe_update(self)
 
     def set_theme_icon(self, is_dark: bool) -> None:

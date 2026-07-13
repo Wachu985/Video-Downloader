@@ -122,10 +122,13 @@ class FFmpegService:
         with self._lock:
             self._location = None
 
-    def ensure_full_toolchain(self) -> None:
+    def ensure_full_toolchain(self, on_ready: Callable[[], None] | None = None) -> None:
         """Fetch static ffmpeg+ffprobe in the background when ffprobe is missing.
 
         One-time download cached on disk; subsequent resolves pick it up.
+        `on_ready` is invoked FROM THE WORKER THREAD after a successful
+        download — bridge to the UI loop (e.g. publish on the EventBus)
+        before touching any control.
         """
         if self.has_ffprobe:
             return
@@ -140,6 +143,8 @@ class FFmpegService:
             else:
                 self.invalidate()
                 logger.info("static-ffmpeg toolchain ready (ffprobe available)")
+                if on_ready is not None:
+                    on_ready()
 
         threading.Thread(target=fetch, name="ffmpeg-fetch", daemon=True).start()
 

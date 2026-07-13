@@ -15,6 +15,12 @@ introduced each change.
 
 ### Fixed
 
+- Packaged app: the UI now updates live when the full FFmpeg toolchain
+  finishes downloading in the background — sidebar chip and Settings
+  dependency card refresh, and a toast confirms ffprobe is available.
+  Previously the "downloading in the background" notice stayed until the
+  app was restarted.
+
 ## [0.1.0] - 2026-07-13
 
 ### Added

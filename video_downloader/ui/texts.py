@@ -159,6 +159,7 @@ TEXTS: dict[str, str] = {
         "Se descargará la versión completa en segundo plano."
     ),
     "ffmpeg_missing": "FFmpeg no disponible — conversiones y mezcla desactivadas",
+    "ffmpeg_ready": "FFmpeg completo instalado — ffprobe ya está disponible.",
     "js_runtime_status": "Motor JavaScript (YouTube)",
     "js_runtime_found": "Disponible para resolver los desafíos JS de YouTube",
     "js_runtime_missing": (

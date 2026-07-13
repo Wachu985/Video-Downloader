@@ -11,7 +11,11 @@ import flet as ft
 from video_downloader.config.constants import APP_TITLE
 from video_downloader.config.settings import AppSettings, SettingsRepository
 from video_downloader.core.event_bus import EventBus
-from video_downloader.core.events import TaskQueued, TaskStateChanged
+from video_downloader.core.events import (
+    FFmpegToolchainReady,
+    TaskQueued,
+    TaskStateChanged,
+)
 from video_downloader.models.download import DownloadState
 from video_downloader.models.media import MediaInfo, PlaylistEntry, PlaylistInfo
 from video_downloader.services.conversion_service import ConversionService
@@ -159,10 +163,14 @@ class AppShell:
         self.ctx.bus.attach_loop(asyncio.get_event_loop())
         self.ctx.bus.subscribe(TaskStateChanged, self._on_task_state_changed)
         self.ctx.bus.subscribe(TaskQueued, self._on_task_queued)
+        self.ctx.bus.subscribe(FFmpegToolchainReady, self._on_ffmpeg_ready)
         page.run_task(self.ctx.bus.pump)
 
-        # Fetch the full ffmpeg+ffprobe toolchain in the background if needed
-        self.ctx.ffmpeg.ensure_full_toolchain()
+        # Fetch the full ffmpeg+ffprobe toolchain in the background if needed.
+        # The callback runs on the fetch thread; the bus crosses to the UI loop.
+        self.ctx.ffmpeg.ensure_full_toolchain(
+            on_ready=lambda: self.ctx.bus.publish(FFmpegToolchainReady())
+        )
 
     # ------------------------------------------------------------------
     # Event handlers
@@ -179,6 +187,17 @@ class AppShell:
 
     def _on_task_queued(self, event: TaskQueued) -> None:
         self._refresh_downloads_badge()
+
+    def _on_ffmpeg_ready(self, event: FFmpegToolchainReady) -> None:
+        """Full toolchain downloaded: refresh status UI and confirm via toast."""
+        from video_downloader.ui.components.toast import show_toast
+
+        source = self.ctx.ffmpeg.resolve().source
+        self._sidebar.set_ffmpeg_status(source)
+        settings_view = self._views[4]
+        if hasattr(settings_view, "refresh_dependencies"):
+            settings_view.refresh_dependencies()
+        show_toast(self.page, t("ffmpeg_ready"))
 
     def _refresh_downloads_badge(self) -> None:
         active = sum(1 for task in self.ctx.download_manager.tasks() if task.is_active)

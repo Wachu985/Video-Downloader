@@ -33,6 +33,10 @@ _TYPE_COLORS = {
 }
 
 
+def _heading(text: str) -> ft.Text:
+    return ft.Text(text, color=ft.Colors.ON_SURFACE_VARIANT)
+
+
 class FormatTable(ft.Column):
     def __init__(
         self,
@@ -55,15 +59,15 @@ class FormatTable(ft.Column):
                 1, ft.Colors.with_opacity(0.5, ft.Colors.OUTLINE_VARIANT)
             ),
             columns=[
-                ft.DataColumn(label=ft.Text(t("fmt_id"), color=ft.Colors.ON_SURFACE_VARIANT)),
-                ft.DataColumn(label=ft.Text(t("fmt_ext"), color=ft.Colors.ON_SURFACE_VARIANT)),
-                ft.DataColumn(label=ft.Text(t("fmt_resolution"), color=ft.Colors.ON_SURFACE_VARIANT)),
-                ft.DataColumn(label=ft.Text(t("fmt_fps"), color=ft.Colors.ON_SURFACE_VARIANT), numeric=True),
-                ft.DataColumn(label=ft.Text(t("fmt_vcodec"), color=ft.Colors.ON_SURFACE_VARIANT)),
-                ft.DataColumn(label=ft.Text(t("fmt_acodec"), color=ft.Colors.ON_SURFACE_VARIANT)),
-                ft.DataColumn(label=ft.Text(t("fmt_bitrate"), color=ft.Colors.ON_SURFACE_VARIANT), numeric=True),
-                ft.DataColumn(label=ft.Text(t("fmt_size"), color=ft.Colors.ON_SURFACE_VARIANT), numeric=True),
-                ft.DataColumn(label=ft.Text(t("fmt_type"), color=ft.Colors.ON_SURFACE_VARIANT)),
+                ft.DataColumn(label=_heading(t("fmt_id"))),
+                ft.DataColumn(label=_heading(t("fmt_ext"))),
+                ft.DataColumn(label=_heading(t("fmt_resolution"))),
+                ft.DataColumn(label=_heading(t("fmt_fps")), numeric=True),
+                ft.DataColumn(label=_heading(t("fmt_vcodec"))),
+                ft.DataColumn(label=_heading(t("fmt_acodec"))),
+                ft.DataColumn(label=_heading(t("fmt_bitrate")), numeric=True),
+                ft.DataColumn(label=_heading(t("fmt_size")), numeric=True),
+                ft.DataColumn(label=_heading(t("fmt_type"))),
             ],
             heading_row_height=44,
             data_row_min_height=40,
@@ -73,7 +77,14 @@ class FormatTable(ft.Column):
         for f in formats:
             row = ft.DataRow(
                 cells=[
-                    ft.DataCell(ft.Text(f.format_id, font_family="monospace", size=12, color=ft.Colors.ON_SURFACE)),
+                    ft.DataCell(
+                        ft.Text(
+                            f.format_id,
+                            font_family="monospace",
+                            size=12,
+                            color=ft.Colors.ON_SURFACE,
+                        )
+                    ),
                     ft.DataCell(ft.Text(f.ext, color=ft.Colors.ON_SURFACE)),
                     ft.DataCell(ft.Text(f.resolution or "—", color=ft.Colors.ON_SURFACE)),
                     ft.DataCell(ft.Text(human_fps(f.fps), color=ft.Colors.ON_SURFACE)),

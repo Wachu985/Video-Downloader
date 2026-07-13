@@ -157,22 +157,7 @@ class SettingsView(ft.Column):
         settings = ctx.settings
 
         # --- Dependency status cards ----------------------------------------
-        location = ctx.ffmpeg.resolve()
-        if location.source == "path":
-            ffmpeg_text = f"{t('ffmpeg_system')} · {location.ffmpeg_path}"
-            ffmpeg_icon, ffmpeg_color = ft.Icons.CHECK_CIRCLE, ft.Colors.GREEN
-        elif location.source == "bundled_full":
-            ffmpeg_text = t("ffmpeg_bundled_full")
-            ffmpeg_icon, ffmpeg_color = ft.Icons.CHECK_CIRCLE, ft.Colors.GREEN
-        elif location.source == "bundled":
-            ffmpeg_text = t("ffmpeg_bundled")
-            ffmpeg_icon, ffmpeg_color = ft.Icons.WARNING, ft.Colors.ORANGE
-        else:
-            ffmpeg_text = t("ffmpeg_missing")
-            ffmpeg_icon, ffmpeg_color = ft.Icons.ERROR, ft.Colors.RED
-        ffmpeg_card = _status_card(
-            t("ffmpeg_status"), ffmpeg_text, ffmpeg_icon, ffmpeg_color
-        )
+        ffmpeg_card = self._build_ffmpeg_card()
 
         runtime = find_js_runtime()
         if runtime:
@@ -317,7 +302,7 @@ class SettingsView(ft.Column):
             expand=8,
             scroll=ft.ScrollMode.AUTO,
         )
-        right = ft.Column(
+        self._deps_column = ft.Column(
             [
                 ft.Text(t("section_dependencies"), style=theme.headline_md()),
                 ffmpeg_card,
@@ -326,6 +311,7 @@ class SettingsView(ft.Column):
             spacing=12,
             expand=4,
         )
+        right = self._deps_column
 
         self.controls = [
             ft.Column(
@@ -350,6 +336,29 @@ class SettingsView(ft.Column):
     def did_mount(self) -> None:
         if self._picker not in self.page.services:
             self.page.services.append(self._picker)
+
+    # ------------------------------------------------------------------
+
+    def _build_ffmpeg_card(self) -> ft.Container:
+        location = self.ctx.ffmpeg.resolve()
+        if location.source == "path":
+            text = f"{t('ffmpeg_system')} · {location.ffmpeg_path}"
+            icon, color = ft.Icons.CHECK_CIRCLE, ft.Colors.GREEN
+        elif location.source == "bundled_full":
+            text = t("ffmpeg_bundled_full")
+            icon, color = ft.Icons.CHECK_CIRCLE, ft.Colors.GREEN
+        elif location.source == "bundled":
+            text = t("ffmpeg_bundled")
+            icon, color = ft.Icons.WARNING, ft.Colors.ORANGE
+        else:
+            text = t("ffmpeg_missing")
+            icon, color = ft.Icons.ERROR, ft.Colors.RED
+        return _status_card(t("ffmpeg_status"), text, icon, color)
+
+    def refresh_dependencies(self) -> None:
+        """Rebuild the FFmpeg status card (toolchain download finished)."""
+        self._deps_column.controls[1] = self._build_ffmpeg_card()
+        safe_update(self)
 
     # ------------------------------------------------------------------
 
