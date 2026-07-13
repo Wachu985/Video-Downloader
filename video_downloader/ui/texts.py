@@ -15,6 +15,7 @@ TEXTS: dict[str, str] = {
     "nav_converter": "Convertidor",
     "nav_settings": "Ajustes",
     "nav_history": "Historial",
+    "nav_about": "Acerca de",
     "brand_subtitle": "Pro Studio Suite",
     "theme_toggle": "Tema",
     "window_minimize": "Minimizar",
@@ -127,6 +128,18 @@ TEXTS: dict[str, str] = {
     "section_network": "Red y cookies",
     "section_conversion": "Conversión y metadata",
     "section_dependencies": "Dependencias",
+    "section_about": "Acerca de",
+    "developed_by": "Desarrollado por",
+    "link_github": "GitHub",
+    "link_linkedin": "LinkedIn",
+    "link_website": "Sitio web",
+    "link_repo": "Código fuente",
+    "link_issues": "Reportar un problema",
+    "about_description": (
+        "Gestor avanzado de descargas multimedia de escritorio. Analiza, "
+        "descarga y convierte video y audio desde tus plataformas favoritas."
+    ),
+    "about_tech_label": "Construido con",
     "save_changes": "Guardar cambios",
     "default_folder": "Carpeta de descargas predeterminada",
     "max_concurrent": "Descargas simultáneas",

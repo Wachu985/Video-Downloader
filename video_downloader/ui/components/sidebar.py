@@ -29,6 +29,7 @@ _DESTINATIONS: list[tuple[str, ft.IconData, ft.IconData]] = [
     ("nav_converter", ft.Icons.SWAP_HORIZ_OUTLINED, ft.Icons.SWAP_HORIZ),
     ("nav_history", ft.Icons.HISTORY, ft.Icons.HISTORY),
     ("nav_settings", ft.Icons.SETTINGS_OUTLINED, ft.Icons.SETTINGS),
+    ("nav_about", ft.Icons.INFO_OUTLINED, ft.Icons.INFO),
 ]
 
 _FFMPEG_CHIP: dict[str, tuple[str, str]] = {

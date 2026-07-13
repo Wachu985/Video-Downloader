@@ -5,6 +5,16 @@ from __future__ import annotations
 APP_NAME = "VideoDownloader"
 APP_AUTHOR = "wachu985"
 APP_TITLE = "Video Downloader"
+# Keep in sync with [project] version in pyproject.toml on every release
+APP_VERSION = "0.1.0"
+
+# Developer / project links shown in the About screen
+DEVELOPER_NAME = "Wachu985"
+DEVELOPER_GITHUB_URL = "https://github.com/Wachu985"
+DEVELOPER_LINKEDIN_URL = "https://www.linkedin.com/in/wachu985/"
+DEVELOPER_WEBSITE_URL = "https://wachu985.hopto.net/" 
+REPO_URL = "https://github.com/Wachu985/Video-Downloader"
+REPO_ISSUES_URL = f"{REPO_URL}/issues"
 
 # Resolution presets: label -> max height (None = any/best)
 RESOLUTION_PRESETS: dict[str, int | None] = {

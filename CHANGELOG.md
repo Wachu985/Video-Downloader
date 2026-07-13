@@ -11,6 +11,12 @@ introduced each change.
 
 ### Added
 
+- About screen with its own sidebar entry: app logo, version, description,
+  developer credit (Wachu985), tech stack chips and clickable links to the
+  GitHub profile, LinkedIn, personal website, source repository and issue
+  tracker (LinkedIn/website buttons appear once their URLs are set in
+  `config/constants.py`).
+
 ### Updated
 
 ### Fixed

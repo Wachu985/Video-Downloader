@@ -235,6 +235,7 @@ class AppShell:
     # ------------------------------------------------------------------
 
     def _build_views(self) -> list[ft.Control]:
+        from video_downloader.ui.views.about_view import AboutView
         from video_downloader.ui.views.converter_view import ConverterView
         from video_downloader.ui.views.dashboard_view import DashboardView
         from video_downloader.ui.views.downloads_view import DownloadsView
@@ -247,6 +248,7 @@ class AppShell:
             ConverterView(self.ctx),
             HistoryView(self.ctx, on_redownload=lambda: self.select_view(1)),
             SettingsView(self.ctx),
+            AboutView(),
         ]
 
     def select_view(self, index: int) -> None:
