@@ -126,6 +126,7 @@ class Sidebar(ft.Container):
         on_select: Callable[[int], None],
         on_toggle_theme: Callable[[], None],
         ffmpeg_source: str,
+        draggable: bool = False,
     ) -> None:
         super().__init__(
             width=EXPANDED_WIDTH,
@@ -165,7 +166,10 @@ class Sidebar(ft.Container):
             ],
             spacing=1,
         )
-        brand = ft.Row([logo, self._brand_texts], spacing=10)
+        brand: ft.Control = ft.Row([logo, self._brand_texts], spacing=10)
+        if draggable:
+            # Frameless window: the brand header doubles as a drag handle.
+            brand = ft.WindowDragArea(brand)
 
         # Destinations ------------------------------------------------------
         self._items: list[_SidebarItem] = [

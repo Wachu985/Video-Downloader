@@ -22,6 +22,7 @@ from video_downloader.services.notification_service import NotificationService
 from video_downloader.services.ytdlp_service import YtdlpService
 from video_downloader.ui import theme
 from video_downloader.ui.components.sidebar import Sidebar
+from video_downloader.ui.components.window_controls import WindowControls
 from video_downloader.ui.texts import t
 
 logger = logging.getLogger(__name__)
@@ -89,6 +90,7 @@ class AppShell:
             on_select=self.select_view,
             on_toggle_theme=self._toggle_theme,
             ffmpeg_source=self.ctx.ffmpeg.resolve().source,
+            draggable=not page.web,
         )
 
     # ------------------------------------------------------------------
@@ -115,11 +117,36 @@ class AppShell:
         self._views = self._build_views()
         self._content.content = self._views[0]
 
+        # Frameless look on desktop: hide the native title bar and replace
+        # its buttons with in-app controls; the top strip drags the window.
+        is_desktop = not page.web
+        main_column: list[ft.Control] = []
+        if is_desktop:
+            page.window.title_bar_hidden = True
+            page.window.title_bar_buttons_hidden = True
+            main_column.append(
+                ft.Container(
+                    content=ft.Row(
+                        [
+                            ft.WindowDragArea(
+                                ft.Container(height=34), expand=True
+                            ),
+                            WindowControls(page),
+                        ],
+                        spacing=0,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                    padding=ft.Padding(left=0, top=10, right=18, bottom=0),
+                )
+            )
+            self._content.padding = ft.Padding(left=32, top=2, right=32, bottom=20)
+        main_column.append(self._content)
+
         page.add(
             ft.Row(
                 [
                     self._sidebar,
-                    self._content,
+                    ft.Column(main_column, spacing=0, expand=True),
                 ],
                 expand=True,
                 spacing=0,
