@@ -7,17 +7,24 @@ from collections.abc import Callable
 import flet as ft
 
 from video_downloader.models.download import DownloadMode
+from video_downloader.ui import theme
 from video_downloader.ui.texts import t
+from video_downloader.ui.utils import safe_update
 
-_MODES: list[tuple[DownloadMode, str, ft.IconData]] = [
-    (DownloadMode.VIDEO_AUDIO, "mode_video_audio", ft.Icons.SMART_DISPLAY),
-    (DownloadMode.VIDEO_ONLY, "mode_video", ft.Icons.VIDEOCAM),
-    (DownloadMode.AUDIO_ONLY, "mode_audio", ft.Icons.MUSIC_NOTE),
+_MODES: list[tuple[DownloadMode, str, str, ft.IconData]] = [
+    (
+        DownloadMode.VIDEO_AUDIO,
+        "mode_video_audio",
+        "mode_video_audio_desc",
+        ft.Icons.SMART_DISPLAY,
+    ),
+    (DownloadMode.VIDEO_ONLY, "mode_video", "mode_video_desc", ft.Icons.VIDEOCAM),
+    (DownloadMode.AUDIO_ONLY, "mode_audio", "mode_audio_desc", ft.Icons.MUSIC_NOTE),
 ]
 
 
 class ModeSelector(ft.Row):
-    """Three selectable Material cards, one per download mode."""
+    """Three selectable cards, one per download mode."""
 
     def __init__(
         self,
@@ -28,26 +35,40 @@ class ModeSelector(ft.Row):
         self.value = value
         self._on_change = on_change
         self._cards: dict[DownloadMode, ft.Container] = {}
+        self._icons: dict[DownloadMode, ft.Icon] = {}
         self.spacing = 12
 
-        for mode, label_key, icon in _MODES:
+        for mode, label_key, desc_key, icon in _MODES:
+            icon_ctl = ft.Icon(icon, size=30)
             card = ft.Container(
                 content=ft.Column(
                     [
-                        ft.Icon(icon, size=32),
-                        ft.Text(t(label_key), size=14, weight=ft.FontWeight.W_600),
+                        icon_ctl,
+                        ft.Text(
+                            t(label_key),
+                            size=14.5,
+                            weight=ft.FontWeight.W_600,
+                            color=ft.Colors.ON_SURFACE,
+                        ),
+                        ft.Text(
+                            t(desc_key),
+                            size=11.5,
+                            color=ft.Colors.ON_SURFACE_VARIANT,
+                            text_align=ft.TextAlign.CENTER,
+                        ),
                     ],
-                    spacing=8,
+                    spacing=6,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
-                padding=20,
-                border_radius=ft.BorderRadius.all(12),
+                padding=ft.Padding.symmetric(vertical=20, horizontal=14),
+                border_radius=ft.BorderRadius.all(theme.RADIUS_CARD - 4),
                 expand=True,
                 alignment=ft.Alignment.CENTER,
                 on_click=self._make_handler(mode),
                 ink=True,
             )
             self._cards[mode] = card
+            self._icons[mode] = icon_ctl
             self.controls.append(card)
         self._style_cards()
 
@@ -57,17 +78,22 @@ class ModeSelector(ft.Row):
             self._style_cards()
             if self._on_change:
                 self._on_change(mode)
-            self.update()
+            safe_update(self)
 
         return handler
 
     def _style_cards(self) -> None:
         for mode, card in self._cards.items():
             selected = mode is self.value
-            card.bgcolor = ft.Colors.SECONDARY_CONTAINER if selected else None
+            card.bgcolor = ft.Colors.PRIMARY_CONTAINER if selected else (
+                ft.Colors.SURFACE_CONTAINER_LOW
+            )
             card.border = ft.Border.all(
-                2 if selected else 1,
+                1.5 if selected else 1,
                 ft.Colors.PRIMARY if selected else ft.Colors.OUTLINE_VARIANT,
+            )
+            self._icons[mode].color = (
+                ft.Colors.PRIMARY if selected else ft.Colors.ON_SURFACE_VARIANT
             )
 
 

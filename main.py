@@ -9,4 +9,4 @@ from video_downloader.utils.env import ensure_common_paths
 if __name__ == "__main__":
     ensure_common_paths()
     setup_logging()
-    ft.run(main)
+    ft.run(main, assets_dir="assets")

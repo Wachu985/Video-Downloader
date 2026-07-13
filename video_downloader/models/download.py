@@ -63,6 +63,9 @@ class DownloadRequest:
     playlist_title: str | None = None
     playlist_index: int | None = None
 
+    # UI-only: thumbnail shown in the downloads list (not sent to yt-dlp)
+    thumbnail_url: str | None = None
+
 
 @dataclass(slots=True)
 class ProgressInfo:

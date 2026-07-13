@@ -11,6 +11,13 @@ from collections.abc import Callable
 import flet as ft
 
 from video_downloader.models.media import FormatInfo, StreamType
+from video_downloader.ui import theme
+from video_downloader.ui.components.status_pill import (
+    PILL_BLUE,
+    PILL_CORAL,
+    PILL_GREEN,
+    StatusPill,
+)
 from video_downloader.ui.texts import t
 from video_downloader.utils.formatting import human_bitrate, human_bytes, human_fps
 
@@ -20,9 +27,9 @@ _TYPE_LABELS = {
     StreamType.MUXED: "stream_muxed",
 }
 _TYPE_COLORS = {
-    StreamType.VIDEO_ONLY: ft.Colors.BLUE,
-    StreamType.AUDIO_ONLY: ft.Colors.GREEN,
-    StreamType.MUXED: ft.Colors.PURPLE,
+    StreamType.VIDEO_ONLY: PILL_BLUE,
+    StreamType.AUDIO_ONLY: PILL_GREEN,
+    StreamType.MUXED: PILL_CORAL,
 }
 
 
@@ -42,16 +49,21 @@ class FormatTable(ft.Column):
         self._rows: dict[str, ft.DataRow] = {}
 
         table = ft.DataTable(
+            border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
+            border_radius=ft.BorderRadius.all(theme.RADIUS_CONTROL + 2),
+            horizontal_lines=ft.BorderSide(
+                1, ft.Colors.with_opacity(0.5, ft.Colors.OUTLINE_VARIANT)
+            ),
             columns=[
-                ft.DataColumn(label=ft.Text(t("fmt_id"))),
-                ft.DataColumn(label=ft.Text(t("fmt_ext"))),
-                ft.DataColumn(label=ft.Text(t("fmt_resolution"))),
-                ft.DataColumn(label=ft.Text(t("fmt_fps")), numeric=True),
-                ft.DataColumn(label=ft.Text(t("fmt_vcodec"))),
-                ft.DataColumn(label=ft.Text(t("fmt_acodec"))),
-                ft.DataColumn(label=ft.Text(t("fmt_bitrate")), numeric=True),
-                ft.DataColumn(label=ft.Text(t("fmt_size")), numeric=True),
-                ft.DataColumn(label=ft.Text(t("fmt_type"))),
+                ft.DataColumn(label=ft.Text(t("fmt_id"), color=ft.Colors.ON_SURFACE_VARIANT)),
+                ft.DataColumn(label=ft.Text(t("fmt_ext"), color=ft.Colors.ON_SURFACE_VARIANT)),
+                ft.DataColumn(label=ft.Text(t("fmt_resolution"), color=ft.Colors.ON_SURFACE_VARIANT)),
+                ft.DataColumn(label=ft.Text(t("fmt_fps"), color=ft.Colors.ON_SURFACE_VARIANT), numeric=True),
+                ft.DataColumn(label=ft.Text(t("fmt_vcodec"), color=ft.Colors.ON_SURFACE_VARIANT)),
+                ft.DataColumn(label=ft.Text(t("fmt_acodec"), color=ft.Colors.ON_SURFACE_VARIANT)),
+                ft.DataColumn(label=ft.Text(t("fmt_bitrate"), color=ft.Colors.ON_SURFACE_VARIANT), numeric=True),
+                ft.DataColumn(label=ft.Text(t("fmt_size"), color=ft.Colors.ON_SURFACE_VARIANT), numeric=True),
+                ft.DataColumn(label=ft.Text(t("fmt_type"), color=ft.Colors.ON_SURFACE_VARIANT)),
             ],
             heading_row_height=44,
             data_row_min_height=40,
@@ -61,26 +73,23 @@ class FormatTable(ft.Column):
         for f in formats:
             row = ft.DataRow(
                 cells=[
-                    ft.DataCell(ft.Text(f.format_id, font_family="monospace", size=12)),
-                    ft.DataCell(ft.Text(f.ext)),
-                    ft.DataCell(ft.Text(f.resolution or "—")),
-                    ft.DataCell(ft.Text(human_fps(f.fps))),
-                    ft.DataCell(ft.Text(f.vcodec or "—", size=12)),
-                    ft.DataCell(ft.Text(f.acodec or "—", size=12)),
-                    ft.DataCell(ft.Text(human_bitrate(f.tbr or f.abr))),
+                    ft.DataCell(ft.Text(f.format_id, font_family="monospace", size=12, color=ft.Colors.ON_SURFACE)),
+                    ft.DataCell(ft.Text(f.ext, color=ft.Colors.ON_SURFACE)),
+                    ft.DataCell(ft.Text(f.resolution or "—", color=ft.Colors.ON_SURFACE)),
+                    ft.DataCell(ft.Text(human_fps(f.fps), color=ft.Colors.ON_SURFACE)),
+                    ft.DataCell(ft.Text(f.vcodec or "—", size=12, color=ft.Colors.ON_SURFACE)),
+                    ft.DataCell(ft.Text(f.acodec or "—", size=12, color=ft.Colors.ON_SURFACE)),
+                    ft.DataCell(ft.Text(human_bitrate(f.tbr or f.abr), color=ft.Colors.ON_SURFACE)),
                     ft.DataCell(
-                        ft.Text(human_bytes(f.filesize, approx=f.filesize_is_approx))
+                        ft.Text(
+                            human_bytes(f.filesize, approx=f.filesize_is_approx),
+                            color=ft.Colors.ON_SURFACE,
+                        )
                     ),
                     ft.DataCell(
-                        ft.Container(
-                            content=ft.Text(
-                                t(_TYPE_LABELS[f.stream_type]),
-                                size=11,
-                                color=ft.Colors.WHITE,
-                            ),
-                            bgcolor=_TYPE_COLORS[f.stream_type],
-                            border_radius=ft.BorderRadius.all(12),
-                            padding=ft.Padding(left=8, right=8, top=3, bottom=3),
+                        StatusPill(
+                            t(_TYPE_LABELS[f.stream_type]),
+                            _TYPE_COLORS[f.stream_type],
                         )
                     ),
                 ],

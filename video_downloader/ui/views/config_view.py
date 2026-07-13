@@ -1,4 +1,8 @@
-"""Download configuration screen (mode, format, quality, destination)."""
+"""Download configuration screen (mode, format, quality, destination).
+
+Layout: fixed header + scrollable body + fixed bottom action bar with a
+live summary of the chosen options.
+"""
 
 from __future__ import annotations
 
@@ -18,13 +22,33 @@ from video_downloader.core.errors import AppError
 from video_downloader.models.download import DownloadMode, DownloadRequest
 from video_downloader.models.media import FormatInfo, MediaInfo, PlaylistInfo
 from video_downloader.services.ytdlp_service import formats_for_display
+from video_downloader.ui import theme
 from video_downloader.ui.app import AppContext
+from video_downloader.ui.components.buttons import primary_button
+from video_downloader.ui.components.chip_group import ChipGroup
 from video_downloader.ui.components.folder_picker import FolderPicker
 from video_downloader.ui.components.format_table import FormatTable
-from video_downloader.ui.components.option_cards import ModeSelector, labeled_dropdown
+from video_downloader.ui.components.option_cards import ModeSelector
+from video_downloader.ui.components.status_pill import PILL_CORAL, StatusPill
 from video_downloader.ui.texts import t
+from video_downloader.ui.utils import safe_update
 
 _CUSTOM_QUALITY = "Personalizada"
+
+
+def _section_title(text: str) -> ft.Text:
+    return ft.Text(text, style=theme.headline_md())
+
+
+def _summary_chip(text: str) -> ft.Container:
+    return ft.Container(
+        content=ft.Text(
+            text, size=12, weight=ft.FontWeight.W_600, color=ft.Colors.ON_SURFACE
+        ),
+        bgcolor=ft.Colors.SURFACE_CONTAINER_HIGH,
+        border_radius=ft.BorderRadius.all(6),
+        padding=ft.Padding.symmetric(vertical=4, horizontal=10),
+    )
 
 
 class ConfigView(ft.Column):
@@ -39,84 +63,153 @@ class ConfigView(ft.Column):
         self.on_started = on_started
         self.on_back = on_back
         self.expand = True
-        self.scroll = ft.ScrollMode.AUTO
-        self.spacing = 16
+        self.spacing = 14
 
         media = ctx.current_media
         self._is_playlist = isinstance(media, PlaylistInfo)
         self._manual_video: FormatInfo | None = None
         self._manual_audio: FormatInfo | None = None
 
-        # --- Header -----------------------------------------------------
+        # --- Header (fixed) ------------------------------------------------
         title = media.title if media else ""
         subtitle = (
             f"{len(ctx.selected_entries)} {t('selected_count')}"
             if self._is_playlist
             else title
         )
-        header = ft.Row(
-            [
-                ft.IconButton(ft.Icons.ARROW_BACK, on_click=lambda e: self.on_back()),
-                ft.Column(
-                    [
-                        ft.Text(t("config_title"), size=24, weight=ft.FontWeight.BOLD),
-                        ft.Text(
-                            subtitle,
-                            size=13,
-                            color=ft.Colors.ON_SURFACE_VARIANT,
-                            max_lines=1,
-                            overflow=ft.TextOverflow.ELLIPSIS,
-                        ),
-                    ],
-                    spacing=2,
-                    expand=True,
-                ),
-            ],
-            spacing=8,
+        header_items: list[ft.Control] = [
+            ft.IconButton(
+                ft.Icons.ARROW_BACK, on_click=lambda e: self.on_back()
+            ),
+            ft.Column(
+                [
+                    ft.Text(t("config_title"), style=theme.headline_lg()),
+                    ft.Text(
+                        subtitle,
+                        size=13,
+                        color=ft.Colors.ON_SURFACE_VARIANT,
+                        max_lines=1,
+                        overflow=ft.TextOverflow.ELLIPSIS,
+                    ),
+                ],
+                spacing=2,
+                expand=True,
+            ),
+        ]
+        if media is not None and media.thumbnail_url:
+            header_items.append(
+                ft.Container(
+                    content=ft.Image(
+                        src=media.thumbnail_url, width=85, height=48,
+                        fit=ft.BoxFit.COVER,
+                    ),
+                    border_radius=ft.BorderRadius.all(8),
+                    clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
+                )
+            )
+        header = ft.Row(header_items, spacing=8)
+
+        ffmpeg_warning = ft.Container(
+            visible=not ctx.ffmpeg.is_available,
+            bgcolor=ft.Colors.ERROR_CONTAINER,
+            border=ft.Border.all(1, ft.Colors.with_opacity(0.4, ft.Colors.ERROR)),
+            border_radius=ft.BorderRadius.all(theme.RADIUS_CONTROL),
+            padding=12,
+            content=ft.Text(t("ffmpeg_missing"), color=ft.Colors.ERROR),
         )
 
-        # --- Mode + options ----------------------------------------------
+        # --- Mode ------------------------------------------------------------
         self._mode_selector = ModeSelector(on_change=self._on_mode_change)
 
-        self._container_dd = labeled_dropdown(t("container"), VIDEO_CONTAINERS)
-        self._resolution_dd = labeled_dropdown(
-            t("resolution"), list(RESOLUTION_PRESETS)
+        # --- Video options (bento: container | quality) ----------------------
+        self._container_cg = ChipGroup(
+            VIDEO_CONTAINERS,
+            sublabels={"mp4": t("recommended")},
+            on_change=lambda v: self._refresh_summary(),
         )
-        self._fps_dd = labeled_dropdown(t("fps"), list(FPS_PRESETS), width=160)
+        self._resolution_cg = ChipGroup(
+            list(RESOLUTION_PRESETS),
+            columns=3,
+            on_change=lambda v: self._refresh_summary(),
+        )
+        self._fps_cg = ChipGroup(list(FPS_PRESETS))
         self._video_options = ft.Row(
-            [self._container_dd, self._resolution_dd, self._fps_dd],
-            spacing=12,
-            wrap=True,
+            [
+                ft.Column(
+                    [
+                        _section_title(t("container_section")),
+                        self._container_cg,
+                        ft.Container(height=6),
+                        _section_title(t("fps")),
+                        self._fps_cg,
+                    ],
+                    spacing=10,
+                    expand=5,
+                ),
+                ft.Column(
+                    [
+                        _section_title(t("quality_section")),
+                        self._resolution_cg,
+                    ],
+                    spacing=10,
+                    expand=7,
+                ),
+            ],
+            spacing=24,
+            vertical_alignment=ft.CrossAxisAlignment.START,
         )
 
-        self._audio_format_dd = labeled_dropdown(t("audio_format"), AUDIO_FORMATS)
-        self._audio_quality_dd = labeled_dropdown(
-            t("audio_quality"),
+        # --- Audio options ----------------------------------------------------
+        self._audio_format_cg = ChipGroup(
+            AUDIO_FORMATS, on_change=lambda v: self._refresh_summary()
+        )
+        self._audio_quality_cg = ChipGroup(
             [*AUDIO_QUALITY_PRESETS, _CUSTOM_QUALITY],
-            on_select=self._on_quality_change,
+            on_change=self._on_quality_change,
         )
         self._custom_bitrate = ft.TextField(
-            label=t("custom_bitrate"), width=220, visible=False, value="192"
+            label=t("custom_bitrate"), width=240, visible=False, value="192"
         )
-        self._audio_options = ft.Row(
-            [self._audio_format_dd, self._audio_quality_dd, self._custom_bitrate],
-            spacing=12,
-            wrap=True,
+        self._audio_options = ft.Column(
+            [
+                _section_title(t("audio_section")),
+                ft.Text(
+                    t("audio_format"),
+                    size=12.5,
+                    color=ft.Colors.ON_SURFACE_VARIANT,
+                ),
+                self._audio_format_cg,
+                ft.Text(
+                    t("audio_quality"),
+                    size=12.5,
+                    color=ft.Colors.ON_SURFACE_VARIANT,
+                ),
+                self._audio_quality_cg,
+                self._custom_bitrate,
+            ],
+            spacing=10,
             visible=False,
         )
 
-        # --- Manual format selection (single video only) ------------------
+        # --- Manual format selection (single video only) ----------------------
         self._formats_holder = ft.Column(spacing=8)
         self._manual_section = ft.ExpansionTile(
-            title=ft.Text(t("manual_selection")),
-            subtitle=ft.Text(t("explore_formats"), size=12),
-            controls=[self._formats_holder],
+            title=ft.Text(
+                t("manual_selection"),
+                size=15,
+                weight=ft.FontWeight.W_600,
+                color=ft.Colors.ON_SURFACE,
+            ),
+            subtitle=ft.Text(
+                t("explore_formats"), size=12, color=ft.Colors.ON_SURFACE_VARIANT
+            ),
+            controls=[
+                ft.Container(content=self._formats_holder, padding=12)
+            ],
             on_change=self._on_manual_expand,
             visible=not self._is_playlist,
         )
-        self._manual_summary = ft.Text(
-            size=13, color=ft.Colors.PRIMARY, visible=False
-        )
+        self._manual_summary = ft.Row(spacing=8, visible=False)
 
         # --- Extras -------------------------------------------------------
         settings = ctx.settings
@@ -129,55 +222,103 @@ class ConfigView(ft.Column):
         self._metadata_cb = ft.Checkbox(
             label=t("embed_metadata"), value=settings.embed_metadata
         )
-        extras = ft.Row(
-            [self._subtitles_cb, self._thumbnail_cb, self._metadata_cb],
-            spacing=16,
-            wrap=True,
+        extras = ft.Column(
+            [
+                _section_title(t("extras_section")),
+                ft.Row(
+                    [self._subtitles_cb, self._thumbnail_cb, self._metadata_cb],
+                    spacing=16,
+                    wrap=True,
+                ),
+            ],
+            spacing=10,
         )
 
-        # --- Destination + action -----------------------------------------
-        self._folder = FolderPicker(settings.download_path)
+        # --- Destination ----------------------------------------------------
+        self._folder = FolderPicker(
+            settings.download_path, on_change=lambda p: self._refresh_summary()
+        )
+        destination = ft.Column(
+            [_section_title(t("destination_section")), self._folder], spacing=10
+        )
 
+        # --- Bottom action bar (fixed) ---------------------------------------
         count = len(ctx.selected_entries) if self._is_playlist else 1
         label = f"{t('download')} ({count})" if count > 1 else t("download")
-        self._download_button = ft.FilledButton(
+        self._download_button = primary_button(
             label, icon=ft.Icons.DOWNLOAD, on_click=self._on_download
         )
-
-        ffmpeg_warning = ft.Container(
-            visible=not ctx.ffmpeg.is_available,
-            bgcolor=ft.Colors.ERROR_CONTAINER,
-            border_radius=ft.BorderRadius.all(10),
-            padding=12,
-            content=ft.Text(
-                t("ffmpeg_missing"), color=ft.Colors.ON_ERROR_CONTAINER
+        self._summary_row = ft.Row(spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+        bottom_bar = ft.Container(
+            content=ft.Row(
+                [
+                    self._summary_row,
+                    ft.Container(expand=True),
+                    self._download_button,
+                ],
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
+            padding=ft.Padding.symmetric(vertical=12, horizontal=16),
+            bgcolor=ft.Colors.SURFACE_CONTAINER_LOW,
+            border=ft.Border.all(1, ft.Colors.OUTLINE_VARIANT),
+            border_radius=ft.BorderRadius.all(theme.RADIUS_CARD),
         )
 
-        self.controls = [
-            header,
-            ffmpeg_warning,
-            self._mode_selector,
-            self._video_options,
-            self._audio_options,
-            self._manual_section,
-            self._manual_summary,
-            ft.Divider(),
-            extras,
-            self._folder,
-            ft.Row([self._download_button]),
-        ]
+        # --- Assembly ---------------------------------------------------------
+        body = ft.Column(
+            [
+                self._mode_selector,
+                ft.Divider(),
+                self._video_options,
+                self._audio_options,
+                ft.Divider(),
+                self._manual_section,
+                self._manual_summary,
+                extras,
+                destination,
+            ],
+            spacing=20,
+            scroll=ft.ScrollMode.AUTO,
+            expand=True,
+        )
+        self.controls = [header, ffmpeg_warning, body, bottom_bar]
+        self._refresh_summary()
 
     # ------------------------------------------------------------------
 
     def _on_mode_change(self, mode: DownloadMode) -> None:
         self._video_options.visible = mode is not DownloadMode.AUDIO_ONLY
         self._audio_options.visible = mode is DownloadMode.AUDIO_ONLY
-        self.update()
+        self._refresh_summary()
+        safe_update(self)
 
-    def _on_quality_change(self, e: ft.Event) -> None:
-        self._custom_bitrate.visible = self._audio_quality_dd.value == _CUSTOM_QUALITY
-        self.update()
+    def _on_quality_change(self, value: str) -> None:
+        self._custom_bitrate.visible = value == _CUSTOM_QUALITY
+        self._refresh_summary()
+        safe_update(self)
+
+    def _refresh_summary(self) -> None:
+        """Rebuild the bottom-bar chips: format · quality → destination."""
+        mode = self._mode_selector.value
+        if mode is DownloadMode.AUDIO_ONLY:
+            fmt = (self._audio_format_cg.value or "mp3").upper()
+            quality = self._audio_quality_cg.value or ""
+        else:
+            fmt = (self._container_cg.value or "mp4").upper()
+            quality = self._resolution_cg.value or ""
+        self._summary_row.controls = [
+            _summary_chip(fmt),
+            _summary_chip(quality),
+            ft.Icon(ft.Icons.ARROW_FORWARD, size=14, color=ft.Colors.ON_SURFACE_VARIANT),
+            ft.Text(
+                str(self._folder.value),
+                size=12.5,
+                color=ft.Colors.ON_SURFACE_VARIANT,
+                max_lines=1,
+                overflow=ft.TextOverflow.ELLIPSIS,
+            ),
+        ]
+        safe_update(self)
 
     async def _on_manual_expand(self, e: ft.Event) -> None:
         media = self.ctx.current_media
@@ -185,7 +326,13 @@ class ConfigView(ft.Column):
             return
         spinner = ft.ProgressRing(width=16, height=16, stroke_width=2)
         self._formats_holder.controls = [
-            ft.Row([spinner, ft.Text(t("loading_formats"))], spacing=8)
+            ft.Row(
+                [
+                    spinner,
+                    ft.Text(t("loading_formats"), color=ft.Colors.ON_SURFACE_VARIANT),
+                ],
+                spacing=8,
+            )
         ]
         self.update()
         try:
@@ -211,13 +358,17 @@ class ConfigView(ft.Column):
     ) -> None:
         self._manual_video = video
         self._manual_audio = audio
-        parts = []
+        pills: list[ft.Control] = []
         if video:
-            parts.append(f"{t('video_stream')}: {video.format_id}")
+            pills.append(
+                StatusPill(f"{t('video_stream')}: {video.format_id}", PILL_CORAL)
+            )
         if audio:
-            parts.append(f"{t('audio_stream')}: {audio.format_id}")
-        self._manual_summary.value = "   ·   ".join(parts)
-        self._manual_summary.visible = bool(parts)
+            pills.append(
+                StatusPill(f"{t('audio_stream')}: {audio.format_id}", PILL_CORAL)
+            )
+        self._manual_summary.controls = pills
+        self._manual_summary.visible = bool(pills)
         self.update()
 
     # ------------------------------------------------------------------
@@ -237,7 +388,7 @@ class ConfigView(ft.Column):
         output_dir = self._folder.value
 
         bitrate: int | None
-        quality = self._audio_quality_dd.value or ""
+        quality = self._audio_quality_cg.value or ""
         if quality == _CUSTOM_QUALITY:
             try:
                 bitrate = max(8, min(512, int(self._custom_bitrate.value or "192")))
@@ -253,16 +404,17 @@ class ConfigView(ft.Column):
             playlist_index: int | None = None,
             video_format_id: str | None = None,
             audio_format_id: str | None = None,
+            thumbnail_url: str | None = None,
         ) -> DownloadRequest:
             return DownloadRequest(
                 url=url,
                 title=title,
                 mode=mode,
                 output_dir=output_dir,
-                container=self._container_dd.value or "mp4",
-                max_height=RESOLUTION_PRESETS.get(self._resolution_dd.value or ""),
-                max_fps=FPS_PRESETS.get(self._fps_dd.value or ""),
-                audio_format=self._audio_format_dd.value or "mp3",
+                container=self._container_cg.value or "mp4",
+                max_height=RESOLUTION_PRESETS.get(self._resolution_cg.value or ""),
+                max_fps=FPS_PRESETS.get(self._fps_cg.value or ""),
+                audio_format=self._audio_format_cg.value or "mp3",
                 audio_bitrate_kbps=bitrate,
                 write_subtitles=bool(self._subtitles_cb.value),
                 embed_thumbnail=bool(self._thumbnail_cb.value),
@@ -271,6 +423,7 @@ class ConfigView(ft.Column):
                 playlist_index=playlist_index,
                 video_format_id=video_format_id,
                 audio_format_id=audio_format_id,
+                thumbnail_url=thumbnail_url,
             )
 
         if isinstance(media, PlaylistInfo):
@@ -291,5 +444,6 @@ class ConfigView(ft.Column):
                 title=media.title,
                 video_format_id=self._manual_video.format_id if self._manual_video else None,
                 audio_format_id=self._manual_audio.format_id if self._manual_audio else None,
+                thumbnail_url=media.thumbnail_url,
             )
         ]

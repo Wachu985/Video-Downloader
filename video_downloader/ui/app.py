@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Callable
 
 import flet as ft
 
 from video_downloader.config.constants import APP_TITLE
 from video_downloader.config.settings import AppSettings, SettingsRepository
 from video_downloader.core.event_bus import EventBus
-from video_downloader.core.events import TaskStateChanged
+from video_downloader.core.events import TaskQueued, TaskStateChanged
 from video_downloader.models.download import DownloadState
 from video_downloader.models.media import MediaInfo, PlaylistEntry, PlaylistInfo
 from video_downloader.services.conversion_service import ConversionService
@@ -20,9 +21,15 @@ from video_downloader.services.history_service import HistoryService
 from video_downloader.services.notification_service import NotificationService
 from video_downloader.services.ytdlp_service import YtdlpService
 from video_downloader.ui import theme
+from video_downloader.ui.components.sidebar import Sidebar
 from video_downloader.ui.texts import t
 
 logger = logging.getLogger(__name__)
+
+# Sidebar collapses below this window width and re-expands above the second
+# threshold (hysteresis so resizing near the edge doesn't flicker).
+_COLLAPSE_BELOW = 1000
+_EXPAND_ABOVE = 1040
 
 
 class AppContext:
@@ -44,50 +51,44 @@ class AppContext:
         # Analysis state shared between dashboard and config views
         self.current_media: MediaInfo | PlaylistInfo | None = None
         self.selected_entries: list[PlaylistEntry] = []
+        # Views with theme-dependent literal colors register here; the shell
+        # invokes every callback right after page.theme_mode changes.
+        self._theme_listeners: list[Callable[[], None]] = []
+        # Set by the shell; views (Settings) use it to apply the theme live.
+        self.apply_theme_mode: Callable[[str, bool], None] = lambda mode, persist: None
 
     def save_settings(self) -> None:
         self.settings_repo.save(self.settings)
         self.download_manager.set_max_concurrent(self.settings.max_concurrent)
+
+    def on_theme_change(self, callback: Callable[[], None]) -> None:
+        self._theme_listeners.append(callback)
+
+    def notify_theme_changed(self) -> None:
+        for callback in self._theme_listeners:
+            try:
+                callback()
+            except Exception:
+                logger.exception("Theme-change listener failed")
+
+    @property
+    def palette(self) -> theme.Palette:
+        return theme.current(self.page)
 
 
 class AppShell:
     def __init__(self, page: ft.Page) -> None:
         self.page = page
         self.ctx = AppContext(page)
+        self.ctx.apply_theme_mode = self.apply_theme_mode
         self._views: list[ft.Control] = []
-        self._content = ft.Container(expand=True, padding=20)
-        self._rail = ft.NavigationRail(
-            selected_index=0,
-            label_type=ft.NavigationRailLabelType.ALL,
-            min_width=80,
-            destinations=[
-                ft.NavigationRailDestination(
-                    icon=ft.Icons.HOME_OUTLINED,
-                    selected_icon=ft.Icons.HOME,
-                    label=t("nav_dashboard"),
-                ),
-                ft.NavigationRailDestination(
-                    icon=ft.Icons.DOWNLOAD_OUTLINED,
-                    selected_icon=ft.Icons.DOWNLOAD,
-                    label=t("nav_downloads"),
-                ),
-                ft.NavigationRailDestination(
-                    icon=ft.Icons.SWAP_HORIZ_OUTLINED,
-                    selected_icon=ft.Icons.SWAP_HORIZ,
-                    label=t("nav_converter"),
-                ),
-                ft.NavigationRailDestination(
-                    icon=ft.Icons.HISTORY,
-                    selected_icon=ft.Icons.HISTORY,
-                    label=t("nav_history"),
-                ),
-                ft.NavigationRailDestination(
-                    icon=ft.Icons.SETTINGS_OUTLINED,
-                    selected_icon=ft.Icons.SETTINGS,
-                    label=t("nav_settings"),
-                ),
-            ],
-            on_change=self._on_nav_change,
+        self._content = ft.Container(
+            expand=True, padding=ft.Padding(left=32, top=24, right=32, bottom=20)
+        )
+        self._sidebar = Sidebar(
+            on_select=self.select_view,
+            on_toggle_theme=self._toggle_theme,
+            ffmpeg_source=self.ctx.ffmpeg.resolve().source,
         )
 
     # ------------------------------------------------------------------
@@ -95,6 +96,12 @@ class AppShell:
     def build(self) -> None:
         page = self.page
         page.title = APP_TITLE
+        page.fonts = {
+            theme.FONT_HEADLINE: "/fonts/SpaceGrotesk-SemiBold.ttf",
+            theme.FONT_BODY: "/fonts/Inter-Regular.ttf",
+            theme.FONT_BODY_MEDIUM: "/fonts/Inter-Medium.ttf",
+            theme.FONT_BODY_SEMIBOLD: "/fonts/Inter-SemiBold.ttf",
+        }
         page.theme = theme.light_theme()
         page.dark_theme = theme.dark_theme()
         page.theme_mode = theme.theme_mode_from_setting(self.ctx.settings.theme_mode)
@@ -103,6 +110,7 @@ class AppShell:
         page.window.min_width = 900
         page.window.min_height = 600
         page.padding = 0
+        page.on_resize = self._on_resize
 
         self._views = self._build_views()
         self._content.content = self._views[0]
@@ -110,31 +118,75 @@ class AppShell:
         page.add(
             ft.Row(
                 [
-                    self._rail,
-                    ft.VerticalDivider(width=1),
+                    self._sidebar,
                     self._content,
                 ],
                 expand=True,
                 spacing=0,
             )
         )
+        self._sidebar.set_theme_icon(theme.current(page) is theme.DARK)
+        self._maybe_collapse(page.width)
 
         # Bridge worker threads -> UI loop, then start consuming events
         self.ctx.bus.attach_loop(asyncio.get_event_loop())
         self.ctx.bus.subscribe(TaskStateChanged, self._on_task_state_changed)
+        self.ctx.bus.subscribe(TaskQueued, self._on_task_queued)
         page.run_task(self.ctx.bus.pump)
 
         # Fetch the full ffmpeg+ffprobe toolchain in the background if needed
         self.ctx.ffmpeg.ensure_full_toolchain()
 
+    # ------------------------------------------------------------------
+    # Event handlers
+
     def _on_task_state_changed(self, event: TaskStateChanged) -> None:
         """Record history and notify when a download reaches a terminal state."""
+        self._refresh_downloads_badge()
         task = self.ctx.download_manager.get(event.task_id)
         if task is None or not task.is_terminal:
             return
         self.ctx.history.record(task)
         if task.state is DownloadState.COMPLETED:
             self.ctx.notifications.notify(t("notify_done_title"), task.request.title)
+
+    def _on_task_queued(self, event: TaskQueued) -> None:
+        self._refresh_downloads_badge()
+
+    def _refresh_downloads_badge(self) -> None:
+        active = sum(1 for task in self.ctx.download_manager.tasks() if task.is_active)
+        self._sidebar.set_downloads_badge(active)
+
+    def _on_resize(self, e: ft.Event) -> None:
+        width = getattr(e, "width", None) or self.page.width
+        self._maybe_collapse(width)
+
+    def _maybe_collapse(self, width: float | None) -> None:
+        if width is None:
+            return
+        if width < _COLLAPSE_BELOW:
+            self._sidebar.set_collapsed(True)
+        elif width >= _EXPAND_ABOVE:
+            self._sidebar.set_collapsed(False)
+
+    # ------------------------------------------------------------------
+    # Theme
+
+    def _toggle_theme(self) -> None:
+        is_dark = theme.current(self.page) is theme.DARK
+        self.apply_theme_mode("light" if is_dark else "dark", persist=True)
+
+    def apply_theme_mode(self, mode: str, persist: bool = True) -> None:
+        """Switch light/dark/system live; optionally persist to settings."""
+        self.page.theme_mode = theme.theme_mode_from_setting(mode)
+        self.ctx.settings.theme_mode = mode
+        if persist:
+            self.ctx.save_settings()
+        self._sidebar.set_theme_icon(theme.current(self.page) is theme.DARK)
+        self.ctx.notify_theme_changed()
+        self.page.update()
+
+    # ------------------------------------------------------------------
 
     def _build_views(self) -> list[ft.Control]:
         from video_downloader.ui.views.converter_view import ConverterView
@@ -151,10 +203,8 @@ class AppShell:
             SettingsView(self.ctx),
         ]
 
-    # ------------------------------------------------------------------
-
     def select_view(self, index: int) -> None:
-        self._rail.selected_index = index
+        self._sidebar.set_active(index)
         self._content.content = self._views[index]
         self.page.update()
 
@@ -168,9 +218,6 @@ class AppShell:
             on_back=lambda: self.select_view(0),
         )
         self.page.update()
-
-    def _on_nav_change(self, e: ft.Event) -> None:
-        self.select_view(int(self._rail.selected_index or 0))
 
 
 async def main(page: ft.Page) -> None:
