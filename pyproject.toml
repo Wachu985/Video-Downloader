@@ -19,6 +19,13 @@ dev = [
     "ruff>=0.15.21",
 ]
 
+# Packaging metadata for `flet build <platform>`
+[tool.flet]
+org = "com.wachu985"
+product = "Video Downloader"
+company = "wachu985"
+copyright = "Copyright (C) 2026 wachu985"
+
 [tool.ruff]
 line-length = 100
 target-version = "py313"
