@@ -1,0 +1,85 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Entries reference the commit (or, going forward, the pull request) that
+introduced each change.
+
+## [Unreleased]
+
+### Added
+
+### Updated
+
+### Fixed
+
+## [0.1.0] - 2026-07-13
+
+### Added
+
+- Initial repository setup and `.gitignore` (`f123894`, `08bc8b8`).
+- Project structure: `config/`, `core/`, `models/`, `services/`, `utils/`,
+  `ui/` packages (`165a971`).
+- Configuration and settings modules: constants, quality/format presets and
+  JSON settings persistence with export/import (`5030a27`).
+- Core infrastructure: error taxonomy, typed events, thread-to-UI event bus
+  and logging configuration (`6d33d82`).
+- Models for download requests/tasks, media metadata (video, playlist,
+  format) and conversions (`80051eb`).
+- Services: yt-dlp integration, FFmpeg resolution with bundled fallbacks,
+  pure `format_builder`, concurrent download manager, conversion queue,
+  download history (SQLite) and desktop notifications (`77e2e3f`).
+- Utility modules: environment/PATH handling, human-readable formatting,
+  URL validation and path helpers (`fd2c4cf`).
+- Flet UI: app shell with navigation and views for home/analysis, download
+  configuration, downloads queue, converter, history and settings
+  (`8ee5728`).
+- Comprehensive test suite for services, models and utilities (`9689ce5`).
+- **Nocturnal Studio design system** — full UI/UX redesign from Google
+  Stitch mockups (`793ee0d`):
+  - Graphite/coral/teal palettes with full dark & light themes and live
+    theme switching (sidebar toggle synced with Settings).
+  - Space Grotesk + Inter typography bundled as offline assets.
+  - Custom sidebar (brand, active-item accent bar, live downloads badge,
+    ffmpeg status chip, theme toggle, collapsible on narrow windows).
+  - Home hero screen with skeleton loading state.
+  - Download config screen: mode cards, chip groups for container/quality/
+    FPS, manual format table, live summary bottom bar.
+  - Downloads view: progress-tinted task cards, status pills, live
+    "active · queued" summary.
+  - Converter (teal accent), History with type/state filters and text
+    search, bento-style Settings with dependency status cards.
+  - Custom toast notifications (Flet's SnackBar renders nothing in 0.85).
+- Frameless window: native title bar hidden, in-app traffic-light window
+  controls (minimize / maximize / close) and drag areas (`138d59d`).
+- App icon (Nocturnal Studio brand mark) generated at
+  `assets/icon.png` (`d9090b7`).
+- Packaging metadata: `[tool.flet]` product name **Video Downloader**,
+  org, company and copyright (`d9090b7`).
+- GitHub Actions release workflow building macOS, Windows and Linux on
+  tag push, with pinned action/tool versions (`d9090b7`).
+- Native release packages: macOS `.dmg`, Windows Inno Setup installer,
+  Debian `.deb` (`787cb3b`) and Linux AppImage (`7b77f21`).
+- CI caching for the Flutter SDK, pub cache and uv packages (`7b77f21`).
+- README: English rewrite with an Installation section (what to download
+  per platform, required Deno, optional FFmpeg/libmpv/VC++), local and CI
+  build instructions and version-pinning policy (`9caf1f4`).
+
+### Updated
+
+- Entry point initializes environment hardening and logging before
+  starting the app (`148c265`).
+
+### Fixed
+
+- Windows CI: force UTF-8 so flet's Unicode progress output doesn't crash
+  on the cp1252 console (`630b4ff`).
+- Release uploads: grant `contents: write` to the workflow token; locate
+  the macOS `.app` bundle dynamically before packaging (`787cb3b`).
+- AppImage packaging: `appimagetool` moved repositories; pinned to release
+  1.9.1 (`7b77f21`).
+
+[Unreleased]: https://github.com/Wachu985/Video-Downloader/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Wachu985/Video-Downloader/releases/tag/v0.1.0
