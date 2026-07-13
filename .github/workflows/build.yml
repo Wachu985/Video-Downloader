@@ -20,6 +20,10 @@ env:
   PYTHON_VERSION: "3.13"
   # Keep in sync with the uv version used locally
   UV_VERSION: "0.11.2"
+  # The Windows runner console defaults to cp1252; flet's progress spinner
+  # prints Unicode (●) and crashes rich without this.
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
 
 jobs:
   build:
