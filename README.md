@@ -99,11 +99,22 @@ gh release create v0.2.0 --title "v0.2.0" --generate-notes
 ```
 
 Pushing the `v*` tag triggers the workflow, which builds the three
-platforms and attaches the packaged binaries to the release for that tag:
+platforms and attaches native installers to the release for that tag:
 
-- `VideoDownloader-macos.zip` (`Video Downloader.app`)
-- `VideoDownloader-windows.zip`
-- `VideoDownloader-linux.tar.gz`
+- `VideoDownloader-macos.dmg` — mount and drag **Video Downloader.app**
+  to Applications.
+- `VideoDownloader-windows-setup.exe` — Inno Setup installer with Start
+  Menu / desktop shortcuts.
+- `VideoDownloader-linux-amd64.deb` — installable with
+  `sudo apt install ./VideoDownloader-linux-amd64.deb` (adds a menu entry
+  and icon). Debian/Ubuntu.
+- `VideoDownloader-linux-x86_64.AppImage` — portable, distro-agnostic:
+  `chmod +x` and run.
+
+CI caching: the Flutter SDK that flet downloads (`~/flutter`, ~1 GB) and
+the pub cache are cached between runs keyed on `uv.lock`; Python packages
+are cached by setup-uv. First run per platform is slow, following runs
+are much faster.
 
 You can also run it manually from the **Actions** tab (workflow_dispatch);
 manual runs upload the binaries as workflow artifacts instead of attaching
