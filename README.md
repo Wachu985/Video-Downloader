@@ -4,6 +4,51 @@ Advanced desktop media download manager built with [Flet](https://flet.dev)
 (Flutter-powered UI), [yt-dlp](https://github.com/yt-dlp/yt-dlp) (download
 engine) and FFmpeg (media processing).
 
+## Installation
+
+### 1. Download the file for your platform
+
+Grab it from the [latest release](../../releases/latest):
+
+| Platform | Download | Install |
+|---|---|---|
+| 🍎 macOS | `VideoDownloader-macos.dmg` | Open the DMG and drag **Video Downloader** to Applications. Unsigned build: the first time, **right-click → Open**. |
+| 🪟 Windows | `VideoDownloader-windows-setup.exe` | Run the installer. If SmartScreen warns: **More info → Run anyway**. |
+| 🐧 Linux (Debian/Ubuntu) | `VideoDownloader-linux-amd64.deb` | `sudo apt install ./VideoDownloader-linux-amd64.deb` |
+| 🐧 Linux (any distro) | `VideoDownloader-linux-x86_64.AppImage` | `chmod +x VideoDownloader-linux-x86_64.AppImage` and run. |
+
+Everything is bundled: you do **not** need Python, yt-dlp or FFmpeg
+installed to use the app.
+
+### 2. Required: a JavaScript engine (for YouTube)
+
+YouTube requires solving JavaScript challenges; without a JS engine most
+YouTube downloads fail. Install [Deno](https://deno.land) (recommended;
+Node.js or Bun also work):
+
+| Platform | Command |
+|---|---|
+| macOS | `brew install deno` |
+| Windows | `winget install deno` |
+| Linux | `sudo snap install deno` (or your distro's package) |
+
+### 3. Optional (better experience)
+
+- **FFmpeg on the system** — the app ships a fallback FFmpeg and can
+  download a full toolchain on first run, but a system install is the most
+  reliable: `brew install ffmpeg` / `winget install ffmpeg` /
+  `sudo apt install ffmpeg`.
+- **AppImage users only**: GTK 3 and libmpv must be present —
+  `sudo apt install libmpv2` / `sudo dnf install mpv-libs`. (The `.deb`
+  installs these automatically.)
+- **Windows on a very clean machine**: the
+  [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+  may be needed if the app doesn't start.
+
+The **Settings** screen shows a live status of FFmpeg and the JS engine,
+so you can verify what the app detected. For age-restricted or private
+content, set **Settings → Browser cookies**.
+
 ## Features
 
 - URL analysis: single videos, playlists and channels.
@@ -17,21 +62,13 @@ engine) and FFmpeg (media processing).
 - Custom "Nocturnal Studio" design system: frameless window with in-app
   controls, dark/light themes, custom sidebar and live download badge.
 
-## Requirements
-
-- [uv](https://docs.astral.sh/uv/) (manages Python 3.13 and all dependencies
-  automatically).
-- FFmpeg is optional: if it is not on the `PATH`, the app uses the bundled
-  `static-ffmpeg` toolchain (ffmpeg + ffprobe, downloaded once in the
-  background) and, as a last resort, the `imageio-ffmpeg` binary (no ffprobe).
-  A system FFmpeg (`brew install ffmpeg`) always takes priority.
-- **YouTube** needs a JavaScript engine to solve its challenges (EJS):
-  `brew install deno` (recommended; node or bun also work). The solver
-  scripts ship with the `yt-dlp-ejs` package. YouTube also tends to require a
-  session: configure **Settings → Browser cookies**. The Settings screen
-  shows the status of both FFmpeg and the JS engine.
-
 ## Run from source
+
+The only tool you need is [uv](https://docs.astral.sh/uv/) — it manages
+Python 3.13 and all dependencies automatically. The FFmpeg/Deno notes from
+[Installation](#installation) apply here too (the app resolves FFmpeg in
+this order: system `PATH` → downloaded `static-ffmpeg` toolchain →
+bundled `imageio-ffmpeg` fallback without ffprobe).
 
 ```bash
 uv sync
@@ -109,7 +146,10 @@ platforms and attaches native installers to the release for that tag:
   `sudo apt install ./VideoDownloader-linux-amd64.deb` (adds a menu entry
   and icon). Debian/Ubuntu.
 - `VideoDownloader-linux-x86_64.AppImage` — portable, distro-agnostic:
-  `chmod +x` and run.
+  `chmod +x` and run. Requires GTK 3 and libmpv on the system.
+
+What end users need on their machine is covered in
+[Installation](#installation) — everything else ships inside the package.
 
 CI caching: the Flutter SDK that flet downloads (`~/flutter`, ~1 GB) and
 the pub cache are cached between runs keyed on `uv.lock`; Python packages
