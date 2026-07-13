@@ -16,6 +16,12 @@ DEVELOPER_WEBSITE_URL = "https://wachu985.hopto.net/"
 REPO_URL = "https://github.com/Wachu985/Video-Downloader"
 REPO_ISSUES_URL = f"{REPO_URL}/issues"
 
+# Installation guide (INSTALL.md) with per-dependency anchors; the status
+# cards in Settings deep-link here when a dependency is missing/partial.
+INSTALL_GUIDE_URL = f"{REPO_URL}/blob/main/INSTALL.md"
+INSTALL_FFMPEG_URL = f"{INSTALL_GUIDE_URL}#ffmpeg"
+INSTALL_DENO_URL = f"{INSTALL_GUIDE_URL}#deno"
+
 # Resolution presets: label -> max height (None = any/best)
 RESOLUTION_PRESETS: dict[str, int | None] = {
     "Mejor disponible": None,

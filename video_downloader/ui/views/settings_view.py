@@ -8,7 +8,12 @@ from pathlib import Path
 
 import flet as ft
 
-from video_downloader.config.constants import COOKIE_BROWSERS, MAX_CONCURRENT_LIMIT
+from video_downloader.config.constants import (
+    COOKIE_BROWSERS,
+    INSTALL_DENO_URL,
+    INSTALL_FFMPEG_URL,
+    MAX_CONCURRENT_LIMIT,
+)
 from video_downloader.ui import theme
 from video_downloader.ui.app import AppContext
 from video_downloader.ui.components.buttons import primary_button, secondary_button
@@ -25,32 +30,48 @@ _THEME_OPTIONS: list[tuple[str, str, ft.IconData]] = [
 ]
 
 
-def _status_card(title: str, detail: str, icon: ft.IconData, color: str) -> ft.Container:
-    return surface_card(
-        ft.Row(
+def _status_card(
+    title: str,
+    detail: str,
+    icon: ft.IconData,
+    color: str,
+    help_url: str | None = None,
+) -> ft.Container:
+    """Dependency status card. With `help_url` (dependency missing/partial)
+    the card becomes clickable and deep-links to the install guide."""
+    row_items: list[ft.Control] = [
+        ft.Icon(icon, color=color, size=22),
+        ft.Column(
             [
-                ft.Icon(icon, color=color, size=22),
-                ft.Column(
-                    [
-                        ft.Text(
-                            title,
-                            weight=ft.FontWeight.W_600,
-                            size=14,
-                            color=ft.Colors.ON_SURFACE,
-                        ),
-                        ft.Text(
-                            detail, size=12, color=ft.Colors.ON_SURFACE_VARIANT
-                        ),
-                    ],
-                    spacing=3,
-                    expand=True,
+                ft.Text(
+                    title,
+                    weight=ft.FontWeight.W_600,
+                    size=14,
+                    color=ft.Colors.ON_SURFACE,
                 ),
+                ft.Text(detail, size=12, color=ft.Colors.ON_SURFACE_VARIANT),
             ],
+            spacing=3,
+            expand=True,
+        ),
+    ]
+    if help_url:
+        row_items.append(
+            ft.Icon(ft.Icons.OPEN_IN_NEW, size=16, color=ft.Colors.ON_SURFACE_VARIANT)
+        )
+    card = surface_card(
+        ft.Row(
+            row_items,
             spacing=12,
             vertical_alignment=ft.CrossAxisAlignment.START,
         ),
         padding=14,
     )
+    if help_url:
+        card.url = help_url
+        card.ink = True
+        card.tooltip = t("install_guide_tooltip")
+    return card
 
 
 def _section(icon: ft.IconData, title: str, *controls: ft.Control) -> ft.Container:
@@ -164,10 +185,14 @@ class SettingsView(ft.Column):
             name, path = runtime
             js_text = f"{name} · {path} — {t('js_runtime_found')}"
             js_icon, js_color = ft.Icons.CHECK_CIRCLE, ft.Colors.GREEN
+            js_url = None
         else:
             js_text = t("js_runtime_missing")
             js_icon, js_color = ft.Icons.WARNING, ft.Colors.ORANGE
-        js_card = _status_card(t("js_runtime_status"), js_text, js_icon, js_color)
+            js_url = INSTALL_DENO_URL
+        js_card = _status_card(
+            t("js_runtime_status"), js_text, js_icon, js_color, help_url=js_url
+        )
 
         # --- Form fields ---------------------------------------------------
         from video_downloader.ui.components.folder_picker import FolderPicker
@@ -341,6 +366,7 @@ class SettingsView(ft.Column):
 
     def _build_ffmpeg_card(self) -> ft.Container:
         location = self.ctx.ffmpeg.resolve()
+        help_url = None
         if location.source == "path":
             text = f"{t('ffmpeg_system')} · {location.ffmpeg_path}"
             icon, color = ft.Icons.CHECK_CIRCLE, ft.Colors.GREEN
@@ -350,10 +376,14 @@ class SettingsView(ft.Column):
         elif location.source == "bundled":
             text = t("ffmpeg_bundled")
             icon, color = ft.Icons.WARNING, ft.Colors.ORANGE
+            help_url = INSTALL_FFMPEG_URL
         else:
             text = t("ffmpeg_missing")
             icon, color = ft.Icons.ERROR, ft.Colors.RED
-        return _status_card(t("ffmpeg_status"), text, icon, color)
+            help_url = INSTALL_FFMPEG_URL
+        return _status_card(
+            t("ffmpeg_status"), text, icon, color, help_url=help_url
+        )
 
     def refresh_dependencies(self) -> None:
         """Rebuild the FFmpeg status card (toolchain download finished)."""

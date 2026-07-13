@@ -6,6 +6,10 @@ engine) and FFmpeg (media processing).
 
 ## Installation
 
+> 📖 Detailed step-by-step guide: [INSTALL.md](INSTALL.md) — the app's
+> dependency status cards (Settings → Dependencies) deep-link straight to
+> the relevant section when something is missing.
+
 ### 1. Download the file for your platform
 
 Grab it from the [latest release](../../releases/latest):

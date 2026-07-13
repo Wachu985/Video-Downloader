@@ -16,6 +16,10 @@ introduced each change.
   GitHub profile, LinkedIn, personal website, source repository and issue
   tracker (LinkedIn/website buttons appear once their URLs are set in
   `config/constants.py`).
+- Installation guide (`INSTALL.md`) with URL anchors per section;
+  the dependency status cards in Settings become clickable when FFmpeg or
+  the JavaScript engine is missing/partial and deep-link to the matching
+  section of the guide on GitHub.
 
 ### Updated
 
