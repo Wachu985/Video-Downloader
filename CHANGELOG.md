@@ -19,6 +19,10 @@ introduced each change.
 - Open-source licensing: MIT `LICENSE` and `CONTRIBUTING.md` (setup,
   conventions and PR workflow); the About screen shows a clickable
   "© 2026 Wachu985 · MIT License" notice linking to the license on GitHub.
+- Pull request template with a quality checklist, and a CI workflow that
+  runs the full test suite, ruff and mypy (with uv caching) on every PR
+  and push to main; the release workflow now gates the platform builds
+  behind the same checks, so no version ships with failing tests.
 - Installation guide (`INSTALL.md`) with URL anchors per section;
   the dependency status cards in Settings become clickable when FFmpeg or
   the JavaScript engine is missing/partial and deep-link to the matching

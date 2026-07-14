@@ -31,7 +31,38 @@ env:
   PYTHONIOENCODING: "utf-8"
 
 jobs:
+  # Quality gate: no release build starts unless the whole test suite,
+  # lint and type checks pass.
+  test:
+    name: Tests, lint and types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.3
+
+      - uses: actions/setup-python@v6.3.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.3.2
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Install project dependencies
+        run: uv sync --frozen
+
+      - name: Run unit tests
+        run: uv run pytest
+
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Type check (mypy)
+        run: uv run mypy video_downloader
+
   build:
+    needs: test
     strategy:
       fail-fast: false
       matrix:

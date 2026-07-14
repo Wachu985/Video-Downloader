@@ -25,7 +25,7 @@ def ensure_common_paths() -> None:
     A packaged .app inherits a minimal PATH from launchd, hiding Homebrew
     binaries such as ffmpeg and deno; terminal launches are unaffected.
     """
-    if not sys.platform == "darwin":
+    if sys.platform != "darwin":
         return
     current = os.environ.get("PATH", "").split(os.pathsep)
     additions = [

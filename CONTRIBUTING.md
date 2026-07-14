@@ -49,8 +49,8 @@ Key design rules — please keep them intact:
 
 ## Quality checks
 
-Run these before opening a pull request — CI-less for now, so they are the
-safety net:
+CI runs these on every pull request (and again before any release build) —
+a PR cannot merge unless they pass, so run them locally first:
 
 ```bash
 uv run pytest              # test suite
