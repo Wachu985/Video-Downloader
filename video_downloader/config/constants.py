@@ -12,7 +12,7 @@ APP_VERSION = "0.1.0"
 DEVELOPER_NAME = "Wachu985"
 DEVELOPER_GITHUB_URL = "https://github.com/Wachu985"
 DEVELOPER_LINKEDIN_URL = "https://www.linkedin.com/in/wachu985/"
-DEVELOPER_WEBSITE_URL = "https://wachu985.hopto.net/" 
+DEVELOPER_WEBSITE_URL = "https://wachu985.hopto.net/"
 REPO_URL = "https://github.com/Wachu985/Video-Downloader"
 REPO_ISSUES_URL = f"{REPO_URL}/issues"
 
