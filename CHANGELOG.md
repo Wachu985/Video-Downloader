@@ -16,6 +16,9 @@ introduced each change.
   GitHub profile, LinkedIn, personal website, source repository and issue
   tracker (LinkedIn/website buttons appear once their URLs are set in
   `config/constants.py`).
+- Open-source licensing: MIT `LICENSE` and `CONTRIBUTING.md` (setup,
+  conventions and PR workflow); the About screen shows a clickable
+  "© 2026 Wachu985 · MIT License" notice linking to the license on GitHub.
 - Installation guide (`INSTALL.md`) with URL anchors per section;
   the dependency status cards in Settings become clickable when FFmpeg or
   the JavaScript engine is missing/partial and deep-link to the matching

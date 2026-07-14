@@ -191,3 +191,12 @@ Key design rules:
   test suite.
 - The UI only shows Spanish messages mapped from the error taxonomy; the
   technical detail goes to the log (`~/Library/Logs/VideoDownloader/`).
+
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for the
+project setup, conventions and pull-request workflow.
+
+## License
+
+This project is open source under the [MIT License](LICENSE).

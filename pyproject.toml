@@ -3,6 +3,8 @@ name = "video-downloader"
 version = "0.1.0"
 description = "Gestor avanzado de descargas multimedia basado en yt-dlp, FFmpeg y Flet"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.13"
 dependencies = [
     "flet[all]>=0.85.3,<0.86",

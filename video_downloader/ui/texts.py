@@ -140,6 +140,8 @@ TEXTS: dict[str, str] = {
         "descarga y convierte video y audio desde tus plataformas favoritas."
     ),
     "about_tech_label": "Construido con",
+    "about_license": "Licencia",
+    "about_license_tooltip": "Software de código abierto — ver la licencia completa",
     "install_guide_tooltip": "Cómo instalarlo — abrir la guía de instalación",
     "save_changes": "Guardar cambios",
     "default_folder": "Carpeta de descargas predeterminada",

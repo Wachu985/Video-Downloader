@@ -5,12 +5,14 @@ from __future__ import annotations
 import flet as ft
 
 from video_downloader.config.constants import (
+    APP_LICENSE,
     APP_TITLE,
     APP_VERSION,
     DEVELOPER_GITHUB_URL,
     DEVELOPER_LINKEDIN_URL,
     DEVELOPER_NAME,
     DEVELOPER_WEBSITE_URL,
+    LICENSE_URL,
     REPO_ISSUES_URL,
     REPO_URL,
 )
@@ -129,6 +131,19 @@ class AboutView(ft.Column):
                         style=theme.label_md(ft.Colors.ON_SURFACE_VARIANT),
                     ),
                     tech_chips,
+                    ft.Container(
+                        content=ft.Text(
+                            f"© 2026 {DEVELOPER_NAME} · {t('about_license')} "
+                            f"{APP_LICENSE}",
+                            size=12,
+                            color=ft.Colors.ON_SURFACE_VARIANT,
+                        ),
+                        url=LICENSE_URL,
+                        tooltip=t("about_license_tooltip"),
+                        padding=ft.Padding.symmetric(vertical=4, horizontal=10),
+                        border_radius=ft.BorderRadius.all(theme.RADIUS_PILL),
+                        ink=True,
+                    ),
                 ],
                 spacing=14,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,

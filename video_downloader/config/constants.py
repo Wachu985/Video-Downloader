@@ -22,6 +22,10 @@ INSTALL_GUIDE_URL = f"{REPO_URL}/blob/main/INSTALL.md"
 INSTALL_FFMPEG_URL = f"{INSTALL_GUIDE_URL}#ffmpeg"
 INSTALL_DENO_URL = f"{INSTALL_GUIDE_URL}#deno"
 
+# Open-source license (shown/linked in the About screen)
+APP_LICENSE = "MIT"
+LICENSE_URL = f"{REPO_URL}/blob/main/LICENSE"
+
 # Resolution presets: label -> max height (None = any/best)
 RESOLUTION_PRESETS: dict[str, int | None] = {
     "Mejor disponible": None,
