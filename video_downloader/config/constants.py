@@ -78,6 +78,10 @@ COOKIE_BROWSERS: list[str] = [
 DEFAULT_MAX_CONCURRENT = 2
 MAX_CONCURRENT_LIMIT = 8
 
+# Hard UI cap for interactive URL analysis: even if yt-dlp hangs beyond its
+# own (fail-fast) retries, the spinner never runs forever.
+ANALYSIS_TIMEOUT_SECONDS = 75
+
 # Output filename template for yt-dlp
 OUTPUT_TEMPLATE = "%(title)s [%(id)s].%(ext)s"
 PLAYLIST_OUTPUT_TEMPLATE = "%(playlist_title)s/%(playlist_index)03d - %(title)s [%(id)s].%(ext)s"

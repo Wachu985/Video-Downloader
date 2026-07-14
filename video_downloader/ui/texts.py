@@ -196,6 +196,10 @@ TEXTS: dict[str, str] = {
     "error_analysis": "No se pudo analizar la URL. Verifica que sea correcta.",
     "error_unsupported_url": "La URL no es válida o no está soportada.",
     "error_network": "Error de red. Revisa tu conexión (o el proxy configurado).",
+    "error_analysis_timeout": (
+        "El análisis está tardando demasiado. Revisa tu conexión a internet "
+        "e inténtalo de nuevo."
+    ),
     "error_auth_required": (
         "Este contenido requiere iniciar sesión. "
         "Configura las cookies del navegador en Ajustes."

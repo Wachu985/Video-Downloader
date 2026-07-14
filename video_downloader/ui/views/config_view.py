@@ -12,6 +12,7 @@ from collections.abc import Callable
 import flet as ft
 
 from video_downloader.config.constants import (
+    ANALYSIS_TIMEOUT_SECONDS,
     AUDIO_FORMATS,
     AUDIO_QUALITY_PRESETS,
     FPS_PRESETS,
@@ -337,8 +338,9 @@ class ConfigView(ft.Column):
         self.update()
         try:
             if not media.formats:
-                full = await asyncio.to_thread(
-                    self.ctx.ytdlp.fetch_formats, media.webpage_url
+                full = await asyncio.wait_for(
+                    asyncio.to_thread(self.ctx.ytdlp.fetch_formats, media.webpage_url),
+                    timeout=ANALYSIS_TIMEOUT_SECONDS,
                 )
                 media.formats = full.formats
             table = FormatTable(
@@ -347,6 +349,10 @@ class ConfigView(ft.Column):
                 on_selection=self._on_manual_selection,
             )
             self._formats_holder.controls = [table]
+        except TimeoutError:
+            self._formats_holder.controls = [
+                ft.Text(t("error_analysis_timeout"), color=ft.Colors.ERROR)
+            ]
         except AppError as err:
             self._formats_holder.controls = [
                 ft.Text(t(err.user_message_key), color=ft.Colors.ERROR)

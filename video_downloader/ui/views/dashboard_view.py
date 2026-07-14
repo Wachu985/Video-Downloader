@@ -8,6 +8,7 @@ from collections.abc import Callable
 
 import flet as ft
 
+from video_downloader.config.constants import ANALYSIS_TIMEOUT_SECONDS
 from video_downloader.core.errors import AppError
 from video_downloader.models.media import MediaInfo, PlaylistInfo
 from video_downloader.services.ytdlp_service import formats_for_display
@@ -217,7 +218,13 @@ class DashboardView(ft.Column):
         self.update()
         run_task(self, self._skeleton.pulse)
         try:
-            result = await asyncio.to_thread(self.ctx.ytdlp.analyze, url)
+            result = await asyncio.wait_for(
+                asyncio.to_thread(self.ctx.ytdlp.analyze, url),
+                timeout=ANALYSIS_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+            logger.warning("Analysis timed out after %ss for %s", ANALYSIS_TIMEOUT_SECONDS, url)
+            self._show_error(t("error_analysis_timeout"))
         except AppError as err:
             logger.warning("Analysis failed (%s): %s", err.user_message_key, err.detail or err)
             self._show_error(t(err.user_message_key))
@@ -290,7 +297,13 @@ class DashboardView(ft.Column):
         self._formats_button.content = t("loading_formats")
         self.update()
         try:
-            full = await asyncio.to_thread(self.ctx.ytdlp.fetch_formats, media.webpage_url)
+            full = await asyncio.wait_for(
+                asyncio.to_thread(self.ctx.ytdlp.fetch_formats, media.webpage_url),
+                timeout=ANALYSIS_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+            self._show_error(t("error_analysis_timeout"))
+            self._formats_button.content = t("explore_formats")
         except AppError as err:
             self._show_error(t(err.user_message_key))
             self._formats_button.content = t("explore_formats")

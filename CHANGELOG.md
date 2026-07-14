@@ -33,6 +33,11 @@ introduced each change.
 - Startup flash: the window now launches hidden and is revealed only once
   the frameless UI is fully built, removing the ugly transition where the
   native title bar and an empty canvas were visible for an instant.
+- URL analysis no longer spins forever when there is no internet: analysis
+  options now fail fast (socket timeout + capped retries) so network
+  errors surface in seconds, and the Home/format-table loaders have a hard
+  75s timeout with a clear "check your connection" message as a safety
+  net.
 
 ## [0.1.0] - 2026-07-13
 

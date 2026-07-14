@@ -171,6 +171,9 @@ def build_analysis_opts(settings: AppSettings) -> dict[str, Any]:
         "quiet": True,
         "noprogress": True,
         "no_color": True,
+        "socket_timeout": 10,
+        "retries": 2,
+        "extractor_retries": 1,
         "remote_components": ["ejs:github"],
         # NOTE: each runtime config must be a dict (yt-dlp does config.get('path'))
         "js_runtimes": {"deno": {}, "node": {}, "bun": {}},

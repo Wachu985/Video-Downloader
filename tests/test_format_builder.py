@@ -138,6 +138,14 @@ class TestYdlOpts:
         assert opts["extract_flat"] == "in_playlist"
         assert opts["skip_download"] is True
 
+    def test_analysis_opts_fail_fast(self):
+        # Interactive analysis must not inherit yt-dlp's long retry chains:
+        # offline failures should surface in seconds, not minutes.
+        opts = fb.build_analysis_opts(AppSettings())
+        assert opts["socket_timeout"] <= 15
+        assert opts["retries"] <= 3
+        assert opts["extractor_retries"] <= 1
+
     def test_youtube_js_challenge_support(self):
         # Both option sets must allow the EJS solver (yt-dlp-ejs + runtime)
         for opts in (
