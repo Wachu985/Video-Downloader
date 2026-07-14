@@ -11,6 +11,14 @@ introduced each change.
 
 ### Added
 
+### Updated
+
+### Fixed
+
+## [0.1.2] - 2026-07-14
+
+### Added
+
 - About screen with its own sidebar entry: app logo, version, description,
   developer credit (Wachu985), tech stack chips and clickable links to the
   GitHub profile, LinkedIn, personal website, source repository and issue
@@ -112,5 +120,6 @@ introduced each change.
 - AppImage packaging: `appimagetool` moved repositories; pinned to release
   1.9.1 (`7b77f21`).
 
-[Unreleased]: https://github.com/Wachu985/Video-Downloader/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Wachu985/Video-Downloader/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/Wachu985/Video-Downloader/compare/v0.1.0...v0.1.2
 [0.1.0]: https://github.com/Wachu985/Video-Downloader/releases/tag/v0.1.0
