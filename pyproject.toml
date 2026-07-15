@@ -1,6 +1,6 @@
 [project]
 name = "video-downloader"
-version = "0.1.2"
+version = "0.1.3"
 description = "Gestor avanzado de descargas multimedia basado en yt-dlp, FFmpeg y Flet"
 readme = "README.md"
 license = "MIT"
