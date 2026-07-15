@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import importlib
 import logging
+import threading
 from collections.abc import Callable
 
 import flet as ft
@@ -284,3 +286,8 @@ async def main(page: ft.Page) -> None:
                 logger.exception("wait_until_ready_to_show failed; showing anyway")
             page.window.visible = True
             page.update()
+        # Warm up yt_dlp (imported lazily off the startup path) so the first
+        # "Analyze" doesn't pay the import cost on its worker thread.
+        threading.Thread(
+            target=lambda: importlib.import_module("yt_dlp"), daemon=True
+        ).start()

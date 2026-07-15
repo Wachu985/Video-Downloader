@@ -28,6 +28,20 @@ product = "Video Downloader"
 company = "wachu985"
 copyright = "Copyright (C) 2026 wachu985"
 
+# Keep the native window hidden until the Python side reveals it
+# (app.py sets page.window.visible = True once the frameless UI is built).
+# Trade-off: if the embedded Python runtime fails to boot, the packaged
+# app's error screen stays in a hidden window and the app appears not to
+# open — acceptable, matches dev-mode FLET_APP_HIDDEN behavior.
+[tool.flet.app]
+hide_window_on_start = true
+
+# Pre-compile .py -> .pyc at build time: faster cold start (no runtime
+# bytecode compilation on first launch, less antivirus churn on Windows).
+[tool.flet.compile]
+app = true
+packages = true
+
 [tool.ruff]
 line-length = 100
 target-version = "py313"
