@@ -11,6 +11,14 @@ introduced each change.
 
 ### Added
 
+### Updated
+
+### Fixed
+
+## [0.1.3] - 2026-07-15
+
+### Added
+
 - Multi-architecture release builds: the release workflow now compiles
   every platform on native runners for each CPU — macOS arm64 (Apple
   Silicon) + x86_64 (Intel), Windows x64 + arm64, Linux amd64 + arm64 —
@@ -141,6 +149,7 @@ introduced each change.
 - AppImage packaging: `appimagetool` moved repositories; pinned to release
   1.9.1 (`7b77f21`).
 
-[Unreleased]: https://github.com/Wachu985/Video-Downloader/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/Wachu985/Video-Downloader/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/Wachu985/Video-Downloader/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/Wachu985/Video-Downloader/compare/v0.1.0...v0.1.2
 [0.1.0]: https://github.com/Wachu985/Video-Downloader/releases/tag/v0.1.0
