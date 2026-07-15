@@ -11,6 +11,15 @@ introduced each change.
 
 ### Added
 
+- Multi-architecture release builds: the release workflow now compiles
+  every platform on native runners for each CPU — macOS arm64 (Apple
+  Silicon) + x86_64 (Intel), Windows x64 + arm64, Linux amd64 + arm64 —
+  since `flet build` cannot cross-compile. Artifacts and packages are
+  now arch-suffixed (`.dmg` per arch, `.deb` amd64/arm64, AppImage
+  x86_64/aarch64, Inno Setup installer x64/arm64 with proper
+  `ArchitecturesAllowed` gating), and the Flutter SDK cache is keyed per
+  runner architecture. (#2)
+
 ### Updated
 
 ### Fixed

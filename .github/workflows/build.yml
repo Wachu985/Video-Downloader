@@ -1,7 +1,12 @@
 name: Build releases
 
-# `flet build` can only compile for the OS it runs on (no cross-compilation),
-# so each platform is built on its own runner.
+# `flet build` can only compile for the OS **and architecture** it runs on
+# (no cross-compilation), so every platform/arch pair is built on its own
+# native runner:
+#   macOS   : arm64 (macos-latest) + x86_64 (macos-15-intel)
+#   Windows : x64 (windows-latest) + arm64 (windows-11-arm)
+#   Linux   : amd64 (ubuntu-latest) + arm64 (ubuntu-24.04-arm)
+# Note: the arm64 Linux/Windows runners are free for public repos only.
 #
 # Triggers:
 #   - Pushing a tag `v*` builds all three platforms and attaches the binaries
@@ -66,16 +71,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # `arch` follows each platform's naming convention (it ends up in
+        # the artifact/package names): macOS arm64|x86_64, Windows
+        # x64|arm64, Linux (Debian) amd64|arm64. `appimage_arch` is the
+        # same CPU in AppImage/uname convention (x86_64|aarch64).
         include:
-          - os: macos-latest
+          - os: macos-latest # Apple Silicon
             platform: macos
-            artifact: build/macos
+            arch: arm64
+          - os: macos-15-intel
+            platform: macos
+            arch: x86_64
           - os: windows-latest
             platform: windows
-            artifact: build/windows
+            arch: x64
+          - os: windows-11-arm
+            platform: windows
+            arch: arm64
           - os: ubuntu-latest
             platform: linux
-            artifact: build/linux
+            arch: amd64
+            appimage_arch: x86_64
+          - os: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
+            appimage_arch: aarch64
 
     runs-on: ${{ matrix.os }}
 
@@ -110,9 +130,9 @@ jobs:
           path: |
             ~/flutter
             ~/.pub-cache
-          key: flutter-sdk-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          key: flutter-sdk-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('uv.lock') }}
           restore-keys: |
-            flutter-sdk-${{ runner.os }}-
+            flutter-sdk-${{ runner.os }}-${{ runner.arch }}-
 
       # --frozen installs exactly what uv.lock pins; it never re-resolves.
       - name: Install project dependencies
@@ -120,14 +140,14 @@ jobs:
 
       # --yes lets flet download the exact Flutter SDK version required by
       # the pinned flet release (deterministic: it comes from uv.lock).
-      - name: Build (${{ matrix.platform }})
+      - name: Build (${{ matrix.platform }} ${{ matrix.arch }})
         run: uv run flet build ${{ matrix.platform }} -v --yes
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: video-downloader-${{ matrix.platform }}
-          path: ${{ matrix.artifact }}
+          name: video-downloader-${{ matrix.platform }}-${{ matrix.arch }}
+          path: build/${{ matrix.platform }}
           if-no-files-found: error
 
       # ------------------------------------------------------------------
@@ -149,7 +169,7 @@ jobs:
           cp -R "$APP_PATH" "dmg-root/Video Downloader.app"
           ln -s /Applications dmg-root/Applications
           hdiutil create -volname "Video Downloader" -srcfolder dmg-root \
-            -ov -format UDZO "VideoDownloader-macos.dmg"
+            -ov -format UDZO "VideoDownloader-macos-${{ matrix.arch }}.dmg"
 
       - name: Package .deb (Linux)
         if: startsWith(github.ref, 'refs/tags/v') && matrix.platform == 'linux'
@@ -192,7 +212,7 @@ jobs:
           Version: $VERSION
           Section: video
           Priority: optional
-          Architecture: amd64
+          Architecture: ${{ matrix.arch }}
           Depends: libgtk-3-0t64 | libgtk-3-0, libmpv2 | libmpv1
           Maintainer: wachu985 <wachu985@users.noreply.github.com>
           Description: Advanced media download manager
@@ -201,16 +221,17 @@ jobs:
           EOF
 
           dpkg-deb --build --root-owner-group $PKG \
-            "build/VideoDownloader-linux-amd64.deb"
+            "build/VideoDownloader-linux-${{ matrix.arch }}.deb"
 
       - name: Package .AppImage (Linux)
         if: startsWith(github.ref, 'refs/tags/v')  && matrix.platform == 'linux'
         shell: bash
         run: |
           # appimagetool pinned to release 1.9.1 (the project moved from the
-          # old AppImageKit repo to AppImage/appimagetool with fixed tags)
+          # old AppImageKit repo to AppImage/appimagetool with fixed tags);
+          # the release ships one binary per CPU (x86_64 / aarch64)
           curl -fsSL -o appimagetool \
-            "https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage"
+            "https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-${{ matrix.appimage_arch }}.AppImage"
           chmod +x appimagetool
 
           APPDIR=build/VideoDownloader.AppDir
@@ -246,18 +267,25 @@ jobs:
           cp assets/icon.png $APPDIR/video-downloader.png
 
           # --appimage-extract-and-run avoids needing FUSE on the runner
-          ARCH=x86_64 ./appimagetool --appimage-extract-and-run \
-            $APPDIR "build/VideoDownloader-linux-x86_64.AppImage"
+          ARCH=${{ matrix.appimage_arch }} ./appimagetool --appimage-extract-and-run \
+            $APPDIR "build/VideoDownloader-linux-${{ matrix.appimage_arch }}.AppImage"
 
       - name: Package installer .exe (Windows)
         if: startsWith(github.ref, 'refs/tags/v') && matrix.platform == 'windows'
         shell: pwsh
         run: |
+          # windows-latest ships Inno Setup preinstalled; windows-11-arm
+          # does not, so install it via Chocolatey when missing (the x86
+          # compiler runs fine under arm64 emulation).
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --no-progress -y
+          }
           $exe = (Get-ChildItem build/windows -Filter *.exe | Select-Object -First 1).Name
           if (-not $exe) { throw "No .exe found under build/windows" }
           $version = "$env:GITHUB_REF_NAME".TrimStart("v")
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
-            /DAppExe=$exe /DAppVersion=$version `
+          & $iscc `
+            /DAppExe=$exe /DAppVersion=$version /DAppArch=${{ matrix.arch }} `
             packaging\windows\installer.iss
 
       - name: Attach binaries to the release (tags only)

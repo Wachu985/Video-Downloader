@@ -29,7 +29,9 @@ installed to use the app.
 
 ### macOS
 
-1. Download `VideoDownloader-macos.dmg`.
+1. Download the DMG for your Mac: `VideoDownloader-macos-arm64.dmg`
+   (Apple Silicon — M1 or newer) or `VideoDownloader-macos-x86_64.dmg`
+   (Intel).
 2. Open it and drag **Video Downloader** to the **Applications** folder.
 3. The app is unsigned: the first time, **right-click → Open** and confirm
    the Gatekeeper dialog.
@@ -38,7 +40,9 @@ installed to use the app.
 
 ### Windows
 
-1. Download `VideoDownloader-windows-setup.exe`.
+1. Download the installer for your CPU:
+   `VideoDownloader-windows-x64-setup.exe` (most PCs) or
+   `VideoDownloader-windows-arm64-setup.exe` (Windows on ARM devices).
 2. Run the installer (it creates Start Menu shortcuts and, optionally, a
    desktop shortcut).
 3. If SmartScreen shows a warning: **More info → Run anyway**.
@@ -47,12 +51,13 @@ installed to use the app.
 
 ### Linux — Debian/Ubuntu (.deb)
 
-1. Download `VideoDownloader-linux-amd64.deb`.
+1. Download the package for your CPU: `VideoDownloader-linux-amd64.deb`
+   (x86_64) or `VideoDownloader-linux-arm64.deb` (ARM, e.g. Raspberry Pi).
 2. Install it (the GTK 3 and libmpv dependencies are installed
    automatically):
 
 ```bash
-sudo apt install ./VideoDownloader-linux-amd64.deb
+sudo apt install ./VideoDownloader-linux-amd64.deb   # or -arm64.deb
 ```
 
 3. "Video Downloader" will appear in your applications menu.
@@ -61,11 +66,13 @@ sudo apt install ./VideoDownloader-linux-amd64.deb
 
 ### Linux — any distro (AppImage)
 
-1. Download `VideoDownloader-linux-x86_64.AppImage`.
+1. Download the AppImage for your CPU:
+   `VideoDownloader-linux-x86_64.AppImage` or
+   `VideoDownloader-linux-aarch64.AppImage` (ARM).
 2. Make it executable and run it:
 
 ```bash
-chmod +x VideoDownloader-linux-x86_64.AppImage
+chmod +x VideoDownloader-linux-x86_64.AppImage   # or -aarch64
 ./VideoDownloader-linux-x86_64.AppImage
 ```
 

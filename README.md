@@ -16,10 +16,14 @@ Grab it from the [latest release](../../releases/latest):
 
 | Platform | Download | Install |
 |---|---|---|
-| 🍎 macOS | `VideoDownloader-macos.dmg` | Open the DMG and drag **Video Downloader** to Applications. Unsigned build: the first time, **right-click → Open**. |
-| 🪟 Windows | `VideoDownloader-windows-setup.exe` | Run the installer. If SmartScreen warns: **More info → Run anyway**. |
-| 🐧 Linux (Debian/Ubuntu) | `VideoDownloader-linux-amd64.deb` | `sudo apt install ./VideoDownloader-linux-amd64.deb` |
-| 🐧 Linux (any distro) | `VideoDownloader-linux-x86_64.AppImage` | `chmod +x VideoDownloader-linux-x86_64.AppImage` and run. |
+| 🍎 macOS (Apple Silicon) | `VideoDownloader-macos-arm64.dmg` | Open the DMG and drag **Video Downloader** to Applications. Unsigned build: the first time, **right-click → Open**. |
+| 🍎 macOS (Intel) | `VideoDownloader-macos-x86_64.dmg` | Same as above. |
+| 🪟 Windows (x64) | `VideoDownloader-windows-x64-setup.exe` | Run the installer. If SmartScreen warns: **More info → Run anyway**. |
+| 🪟 Windows (ARM) | `VideoDownloader-windows-arm64-setup.exe` | Same as above. |
+| 🐧 Linux Debian/Ubuntu (x86_64) | `VideoDownloader-linux-amd64.deb` | `sudo apt install ./VideoDownloader-linux-amd64.deb` |
+| 🐧 Linux Debian/Ubuntu (ARM) | `VideoDownloader-linux-arm64.deb` | `sudo apt install ./VideoDownloader-linux-arm64.deb` |
+| 🐧 Linux any distro (x86_64) | `VideoDownloader-linux-x86_64.AppImage` | `chmod +x VideoDownloader-linux-x86_64.AppImage` and run. |
+| 🐧 Linux any distro (ARM) | `VideoDownloader-linux-aarch64.AppImage` | `chmod +x VideoDownloader-linux-aarch64.AppImage` and run. |
 
 Everything is bundled: you do **not** need Python, yt-dlp or FFmpeg
 installed to use the app.
@@ -127,6 +131,9 @@ Notes:
 
 The workflow [.github/workflows/build.yml](.github/workflows/build.yml)
 builds macOS, Windows and Linux in parallel on GitHub-hosted runners.
+Since `flet build` cannot cross-compile, each architecture is built on
+its own native runner: macOS arm64 + x86_64, Windows x64 + arm64 and
+Linux amd64 + arm64 (six jobs in total).
 
 **To publish a release:**
 
@@ -139,26 +146,28 @@ git push origin v0.2.0
 gh release create v0.2.0 --title "v0.2.0" --generate-notes
 ```
 
-Pushing the `v*` tag triggers the workflow, which builds the three
-platforms and attaches native installers to the release for that tag:
+Pushing the `v*` tag triggers the workflow, which builds every
+platform/architecture pair and attaches native installers to the release
+for that tag:
 
-- `VideoDownloader-macos.dmg` — mount and drag **Video Downloader.app**
-  to Applications.
-- `VideoDownloader-windows-setup.exe` — Inno Setup installer with Start
-  Menu / desktop shortcuts.
-- `VideoDownloader-linux-amd64.deb` — installable with
-  `sudo apt install ./VideoDownloader-linux-amd64.deb` (adds a menu entry
+- `VideoDownloader-macos-{arm64,x86_64}.dmg` — mount and drag
+  **Video Downloader.app** to Applications.
+- `VideoDownloader-windows-{x64,arm64}-setup.exe` — Inno Setup installer
+  with Start Menu / desktop shortcuts.
+- `VideoDownloader-linux-{amd64,arm64}.deb` — installable with
+  `sudo apt install ./VideoDownloader-linux-<arch>.deb` (adds a menu entry
   and icon). Debian/Ubuntu.
-- `VideoDownloader-linux-x86_64.AppImage` — portable, distro-agnostic:
-  `chmod +x` and run. Requires GTK 3 and libmpv on the system.
+- `VideoDownloader-linux-{x86_64,aarch64}.AppImage` — portable,
+  distro-agnostic: `chmod +x` and run. Requires GTK 3 and libmpv on the
+  system.
 
 What end users need on their machine is covered in
 [Installation](#installation) — everything else ships inside the package.
 
 CI caching: the Flutter SDK that flet downloads (`~/flutter`, ~1 GB) and
-the pub cache are cached between runs keyed on `uv.lock`; Python packages
-are cached by setup-uv. First run per platform is slow, following runs
-are much faster.
+the pub cache are cached between runs keyed on `uv.lock` and the runner
+architecture; Python packages are cached by setup-uv. First run per
+platform/arch is slow, following runs are much faster.
 
 You can also run it manually from the **Actions** tab (workflow_dispatch);
 manual runs upload the binaries as workflow artifacts instead of attaching
