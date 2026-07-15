@@ -13,8 +13,6 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-import yt_dlp
-
 from video_downloader.config.constants import PROGRESS_THROTTLE_SECONDS
 from video_downloader.config.settings import AppSettings
 from video_downloader.core.errors import (
@@ -77,6 +75,8 @@ class YtdlpService:
 
     @staticmethod
     def _extract(url: str, opts: dict[str, Any]) -> dict[str, Any]:
+        import yt_dlp
+
         try:
             with yt_dlp.YoutubeDL(opts) as ydl:
                 info = ydl.extract_info(url, download=False)
@@ -94,6 +94,8 @@ class YtdlpService:
 
     def download(self, task: DownloadTask, bus: EventBus) -> Path:
         """Download *task* publishing progress events; returns the final path."""
+        import yt_dlp
+
         settings = self._settings_provider()
         opts = format_builder.build_ydl_opts(
             task.request,

@@ -22,7 +22,19 @@ introduced each change.
 
 ### Updated
 
+- Faster startup: `.py` sources are pre-compiled to bytecode at build time
+  (`tool.flet.compile`), removing first-launch bytecode compilation and
+  reducing antivirus churn on Windows; `yt_dlp` (the heaviest import) is
+  now loaded lazily off the startup path and warmed up in a background
+  thread right after the window is revealed. (#3)
+
 ### Fixed
+
+- Packaged (Release) app no longer flashes a bare native window with the
+  OS title bar for several seconds before the real frameless UI appears:
+  `tool.flet.app.hide_window_on_start` keeps the window hidden until the
+  Python side reveals it, matching the dev-mode `FLET_APP_HIDDEN`
+  behavior that already worked with `flet run`. (#3)
 
 ## [0.1.2] - 2026-07-14
 
