@@ -18,7 +18,7 @@ introduced each change.
   now arch-suffixed (`.dmg` per arch, `.deb` amd64/arm64, AppImage
   x86_64/aarch64, Inno Setup installer x64/arm64 with proper
   `ArchitecturesAllowed` gating), and the Flutter SDK cache is keyed per
-  runner architecture.
+  runner architecture. (#2)
 
 ### Updated
 
